@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 @Controller
-public class ChatController {
-	@RequestMapping(value = "/chat/test", method = RequestMethod.GET)
+public class GameController {
+	@RequestMapping(value = "/game/vivria/room", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) {
 		
-		return "chat/test";
+		return "game/vivria/room";
 	}
 }

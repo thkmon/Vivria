@@ -1,4 +1,4 @@
-package com.bb.vivria.socket;
+package com.bb.vivria.socket.test;
 
 import java.util.ArrayList;
 
@@ -9,8 +9,8 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
-@ServerEndpoint("/websocket")
-public class Websocket {
+@ServerEndpoint("/testwebsocket")
+public class TestWebsocketController {
 
 	/**
 	 * 웹소켓 세션을 담는 ArrayList
