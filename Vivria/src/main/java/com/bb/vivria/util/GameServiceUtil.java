@@ -2,15 +2,17 @@ package com.bb.vivria.util;
 
 import javax.websocket.Session;
 
-import com.bb.vivria.socket.data.RoomIdAndUserSessionListMap;
+import com.bb.vivria.common.GameConst;
+import com.bb.vivria.data.RoomData;
+import com.bb.vivria.socket.data.RoomDataMap;
 import com.bb.vivria.socket.data.StringMap;
 import com.bb.vivria.socket.data.UserSession;
 import com.bb.vivria.socket.data.UserSessionList;
 
-public class GameServiceUtil {
+public class GameServiceUtil implements GameConst {
 	
 	private static StringMap sessionIdAndRoomIdMap = new StringMap();
-	private static RoomIdAndUserSessionListMap roomIdAndUserSessionListMap = new RoomIdAndUserSessionListMap();
+	private static RoomDataMap roomDataMap = new RoomDataMap();
 	
 	
 	public static UserSession addUserSessionList(String roomId, Session session) {
@@ -28,19 +30,20 @@ public class GameServiceUtil {
 			sessionIdAndRoomIdMap.put(sessionId, roomId);
 		}
 		
-		if (roomIdAndUserSessionListMap.get(roomId) == null) {
-			roomIdAndUserSessionListMap.put(roomId, new UserSessionList());
+		// 기존에 방이 없으면 방을 생성한다.
+		if (roomDataMap.get(roomId) == null) {
+			roomDataMap.put(roomId, new RoomData());
 		}
 		
 		UserSession userSession = new UserSession(session);
-		roomIdAndUserSessionListMap.get(roomId).add(userSession);
+		roomDataMap.get(roomId).addUserSession(userSession);
 		
 		return userSession;
 	}
 	
 	
 	public static UserSessionList getUserSessionListByRoomId(String roomId) {
-		return roomIdAndUserSessionListMap.get(roomId);
+		return roomDataMap.get(roomId).getUserSessionList();
 	}
 	
 	
@@ -68,6 +71,21 @@ public class GameServiceUtil {
 		}
 		
 		return userSessionList.getUserSession(sessionId);
+	}
+	
+	
+	public static RoomData getRoomData(Session session) {
+		if (session == null) {
+			return null;
+		}
+		
+		String sessionId = session.getId();
+		String roomId = sessionIdAndRoomIdMap.get(sessionId);
+		if (roomId == null || roomId.length() == 0) {
+			return null;
+		}
+		
+		return roomDataMap.get(roomId);
 	}
 	
 	

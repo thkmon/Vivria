@@ -19,16 +19,6 @@ public class WebsocketController {
 	@OnOpen
 	public void handleOpen(Session session) {
 		new GameService().handleConnection(session);
-		
-//		if (session != null) {
-//			String sessionId = session.getId();
-//			
-//			System.out.println("client is connected. sessionId == [" + sessionId + "]");
-//			UserSessionUtil.userSessionList.add(session);
-//			
-//			// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
-//			sendMessageToAll("***** [USER-" + sessionId + "] is connected. *****");
-//		}
 	}
 	
 
@@ -39,25 +29,6 @@ public class WebsocketController {
 	public String handleMessage(String message, Session session) {
 		new GameService().handleClientMessage(message, session);
 		return null;
-		
-//		if (message == null) {
-//			message = "";
-//		}
-//		
-//		if (session == null) {
-//			return null;
-//		}
-//		
-//		if (message.startsWith("user_nick_name")) {
-//			
-//		}
-//		
-//		String sessionId = session.getId();
-//		System.out.println("message is arrived. sessionId == [" + sessionId + "] / message == [" + message + "]");
-//
-//		// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
-//		sendMessageToAll("[USER-" + sessionId + "] " + message);
-//		return null;
 	}
 	
 
@@ -67,13 +38,6 @@ public class WebsocketController {
 	@OnClose
 	public void handleClose(Session session) {
 		new GameService().handleDisconnection(session);
-//		if (session != null) {
-//			String sessionId = session.getId();
-//			System.out.println("client is disconnected. sessionId == [" + sessionId + "]");
-//			
-//			// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
-//			sendMessageToAll("***** [USER-" + sessionId + "] is disconnected. *****");
-//		}
 	}
 
 	
@@ -84,36 +48,4 @@ public class WebsocketController {
 	public void handleError(Throwable t) {
 		t.printStackTrace();
 	}
-	
-	
-//	/**
-//	 * 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
-//	 */
-//	private boolean sendMessageToAll(String message) {
-//		if (UserSessionUtil.userSessionList == null) {
-//			return false;
-//		}
-//
-//		int sessionCount = UserSessionUtil.userSessionList.size();
-//		if (sessionCount < 1) {
-//			return false;
-//		}
-//
-//		Session singleSession = null;
-//
-//		for (int i = 0; i < sessionCount; i++) {
-//			singleSession = UserSessionUtil.userSessionList.getSession(i);
-//			if (singleSession == null) {
-//				continue;
-//			}
-//
-//			if (!singleSession.isOpen()) {
-//				continue;
-//			}
-//
-//			UserSessionUtil.userSessionList.getSession(i).getAsyncRemote().sendText(message);
-//		}
-//
-//		return true;
-//	}
 }
