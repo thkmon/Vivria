@@ -58,12 +58,17 @@ public class RoomData implements GameConst {
 	}
 	
 	
+	/**
+	 * 게임시작
+	 * 
+	 * @param session
+	 */
 	public void startNewGame(Session session) {
 
 		// 게이머 리스트 구한다.
 		gamerIdList = createGamerIdList(session);
 		
-		gamerTurnIndex = 0;
+		gamerTurnIndex = -1;
 		
 		// 새 타일 데이터(맵)을 생성한다.
 		int gamerCount = gamerIdList.size();
@@ -71,6 +76,211 @@ public class RoomData implements GameConst {
 		
 		// 게임시작
 		this.gameIsStarted = true;
+	}
+	
+	
+	/**
+	 * 다음턴 지정
+	 * 
+	 * @return
+	 */
+	public int getNextTurnIndex() {
+		
+		gamerTurnIndex++;
+		
+		if (gamerTurnIndex < 0) {
+			gamerTurnIndex = 0;
+		}
+		
+		int lastIndex = gamerIdList.size() - 1;
+		if (gamerTurnIndex > lastIndex) {
+			gamerTurnIndex = 0;
+		}
+		
+		return gamerTurnIndex;
+	}
+	
+	
+	/**
+	 * 클라이언트 화면에 맵 그리기
+	 * 
+	 * @return
+	 */
+	public String getMapStringForDraw() {
+		
+		// - 비브리아 있는지 없는지 => 통행불가/통행가능
+		// - 색상
+		// - 어느 유저의 비브리아인지 
+		// - 숫자가 몇인지
+		
+		StringBuffer buff = new StringBuffer();
+		
+		for (int c=0; c<=10; c++) {
+			for (int r=0; r<=10; r++) {
+				if (buff.length() > 0) {
+					buff.append(";");
+				}
+				
+				buff.append(tileDataArray[c][r].toString());
+			}
+		}
+		
+		return buff.toString();
+	}
+	
+	
+	public void moveUnit(int col1, int row1, int col2, int row2) throws MessageException {
+
+		int deltaCol = col2 - col1;
+		if (deltaCol < 0) {
+			deltaCol = deltaCol * -1;
+		}
+		
+		int deltaRow = row2 - row1;
+		if (deltaRow < 0) {
+			deltaRow = deltaRow * -1;
+		}
+		
+		int deltaPoint = deltaCol + deltaRow;
+
+		if (deltaPoint == 0) {
+			throw new MessageException("자기자신을 찍어서 뭐 어쩌겠단건지?");
+		}
+		
+		TileData tile1 = tileDataArray[col1][row1];
+		TileData tile2 = tileDataArray[col2][row2];
+		
+		if (!tile1.isCanMove() || !tile2.isCanMove()) {
+			throw new MessageException("이동할 수 없는 타일입니다.");
+		}
+		
+		if (tile1.getGamerIndex() != gamerTurnIndex) {
+			throw new MessageException("남의 캐릭터는 이동시킬 수 없습니다.");
+		}
+		
+		int gamerIndex1 = tile1.getGamerIndex();
+		int gamerIndex2 = tile2.getGamerIndex();
+		
+		int vivriaCount1 = tile1.getVivriaCount();
+		int vivriaCount2 = tile2.getVivriaCount();
+
+		int pointCanMove = 0;
+		
+		// 번식모드
+		boolean breedingMode = false;
+				
+		// 이동모드
+		boolean moveMode = false;
+		
+		if (vivriaCount2 == 0) {
+			moveMode = true;
+		}
+		
+		// (4) 비브리아 크기가 1~3이면 3칸 이동, 4~6은 2칸이동, 7~9는 1칸 이동, 10과 왕은 이동 불가.
+		if (vivriaCount1 == 0) {
+			throw new MessageException("빈칸은 이동시킬 수 없습니다.");
+			
+		} else if (1 <= vivriaCount1 && vivriaCount1 <= 3) {
+			pointCanMove = 3;
+			
+		} else if (4 <= vivriaCount1 && vivriaCount1 <= 6) {
+			pointCanMove = 2;
+			
+		} else if (7 <= vivriaCount1 && vivriaCount1 <= 9) {
+			pointCanMove = 1;
+			
+		} else if (10 == vivriaCount1 || tile1.isKingVivria() == true) {
+			pointCanMove = 1;
+			breedingMode = true;
+		}
+		
+		if (deltaPoint > pointCanMove) {
+			if (breedingMode) {
+				throw new MessageException("그렇게 멀리 번식할 수 없습니다.");
+			} else if (moveMode) {
+				throw new MessageException("그렇게 멀리 이동할 수 없습니다.");
+			} else {
+				throw new MessageException("그렇게 멀리 이동할 수 없습니다.");
+			}
+		}
+		
+		// * 목표는 상대방 왕 비브리아를 잡는 것.
+		// - (1) 비브리아는 1~10까지의 크기를 가지는데 아군끼리 합체할 수 있다.
+		// - (2) 적의 비브리아를 공격하면 숫자가 같거나 크면 흡수하고, 작으면 흡수 당한다.
+		// - (3) 비브리아 크기가 10을 초과하면 배가 터져 죽는다.
+		// - (4) 비브리아 크기가 1~3이면 3칸 이동, 4~6은 2칸이동, 7~9는 1칸 이동, 10과 왕은 이동 불가.
+		// - (5)크기가 10인 비브리아나 왕비브리아는 번식을 할 수 있는데,
+		// (5-1) 빈칸에 번식하면 크기가 1인 비브리아가 생기고,
+		// (5-2) 아군의 자리에 하면 아군의 크기가 1 커지고,
+		// (5-3) 적이 있는 곳에 번식을 하면 무조건 아군이 되고, 적의 크기에서 1을 더한 크기가 된다.
+		
+		// 번식모드
+		if (breedingMode) {
+			
+			// (5-1) 빈칸에 번식하면 크기가 1인 비브리아가 생기고,
+			if (vivriaCount2 == 0) {
+				tile2.setGamerIndex(tile1.getGamerIndex());
+				tile2.setVivriaCount(1);
+				return;
+			}
+			
+			// 번식했을 때 크기가 10 초과하면 터진다.
+			int newCount = vivriaCount2 + 1;
+			
+			if (newCount > 10) {
+				removeVivriaUnit(tile2);
+				return;
+			}
+			
+			// (5-2) 아군의 자리에 하면 아군의 크기가 1 커지고,
+			// (5-3) 적이 있는 곳에 번식을 하면 무조건 아군이 되고, 적의 크기에서 1을 더한 크기가 된다.
+			tile2.setGamerIndex(tile1.getGamerIndex());
+			tile2.setVivriaCount(newCount);
+			return;
+		}
+		
+		
+		// 이동모드
+		if (moveMode) {
+			// 타일1 값을 타일2에 옮기고, 타일1 지운다.
+			tile2.setGamerIndex(gamerIndex1);
+			tile2.setVivriaCount(vivriaCount1);
+			
+			removeVivriaUnit(tile1);
+			return;
+		}
+
+
+		// 번식모드도 이동모드도 아니면... 공격모드다.
+		int newCount = vivriaCount1 + vivriaCount2;
+		if (newCount > 10) {
+			// (3) 비브리아 크기가 10을 초과하면 배가 터져 죽는다.
+			removeVivriaUnit(tile1);
+			removeVivriaUnit(tile2);
+			return;
+			
+		} else {
+			removeVivriaUnit(tile1);
+			tile2.setVivriaCount(newCount);
+			
+			// (1) 비브리아는 1~10까지의 크기를 가지는데 아군끼리 합체할 수 있다.
+			if (gamerIndex1 != gamerIndex2) {
+				// (2) 적의 비브리아를 공격하면 숫자가 같거나 크면 흡수하고, 작으면 흡수 당한다.
+				if (vivriaCount1 >= vivriaCount2) {
+					tile2.setGamerIndex(gamerIndex1);
+				} else {
+					tile2.setGamerIndex(gamerIndex2);
+				}
+			}
+			
+			return;
+		}
+	}
+	
+	
+	private void removeVivriaUnit(TileData tile) {
+		tile.setGamerIndex(-1);
+		tile.setVivriaCount(0);
 	}
 	
 	
@@ -144,7 +354,12 @@ public class RoomData implements GameConst {
 	}
 	
 	
-
+	/**
+	 * 모든 게이머(방장 포함)의 아이디를 수집해서 StringList로 만든다.
+	 * 
+	 * @param session
+	 * @return
+	 */
 	private StringList createGamerIdList(Session session) {
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
@@ -189,5 +404,18 @@ public class RoomData implements GameConst {
 		}
 
 		return resultList;
+	}
+	
+	
+	
+	public boolean checkSessionIsTurnNow(Session session) {
+		
+		String gamerId = this.gamerIdList.get(gamerTurnIndex);
+		
+		if (gamerId.equals(session.getId())) {
+			return true;
+		}
+		
+		return false;
 	}
 }

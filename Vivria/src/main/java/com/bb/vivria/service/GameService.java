@@ -3,10 +3,12 @@ package com.bb.vivria.service;
 import javax.websocket.Session;
 
 import com.bb.vivria.common.GameConst;
+import com.bb.vivria.data.MessageException;
 import com.bb.vivria.data.RoomData;
 import com.bb.vivria.socket.data.UserSession;
 import com.bb.vivria.socket.data.UserSessionList;
 import com.bb.vivria.util.GameServiceUtil;
+import com.bb.vivria.util.StringUtil;
 
 public class GameService implements GameConst {
 	
@@ -113,6 +115,12 @@ public class GameService implements GameConst {
 			handleReadyToGame(messageValue, session);
 			return;
 		}
+		
+		// 유닛이동
+		if (messageKey.equals("MOVE_UNIT")) {
+			handleMoveUnit(messageValue, session);
+			return;
+		}
 	}
 	
 	
@@ -143,9 +151,24 @@ public class GameService implements GameConst {
 				continue;
 			}
 
-			userSessionList.getOriginSession(i).getAsyncRemote().sendText(message);
+			singleSession.getAsyncRemote().sendText(message);
 		}
 
+		return true;
+	}
+	
+	
+	private boolean sendMessageToOne(Session singleSession, String message) {
+		
+		if (singleSession == null) {
+			return false;
+		}
+
+		if (!singleSession.isOpen()) {
+			return false;
+		}
+
+		singleSession.getAsyncRemote().sendText(message);
 		return true;
 	}
 	
@@ -391,6 +414,12 @@ public class GameService implements GameConst {
 	}
 	
 	
+	/**
+	 * 방장의 게임시작
+	 * 
+	 * @param messageValue
+	 * @param session
+	 */
 	private void handleStartGame(String messageValue, Session session) {
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
@@ -420,9 +449,21 @@ public class GameService implements GameConst {
 		
 		// 게임시작
 		roomData.startNewGame(session);
+		
+		// 클라이언트 화면에 맵 그리기
+		drawMap(session);
+		
+		// 다음턴 지정
+		setNextTurn(session);
 	}
 	
 	
+	/**
+	 * 방 참가자들의 게임 준비
+	 * 
+	 * @param messageValue
+	 * @param session
+	 */
 	private void handleReadyToGame(String messageValue, Session session) {
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
@@ -450,5 +491,98 @@ public class GameService implements GameConst {
 		} else {
 			userSession.setReadyToGame(false);
 		}
+	}
+	
+	
+	/**
+	 * 유닛이동
+	 * 
+	 * @param messageValue
+	 * @param session
+	 */
+	private void handleMoveUnit(String messageValue, Session session) {
+		UserSession userSession = GameServiceUtil.getUserSession(session);
+		if (userSession == null) {
+			return;
+		}
+		
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		if (roomData == null) {
+			return;
+		}
+		
+		// 게임이 아직 시작되지 않았으면 그만둔다.
+		if (!roomData.isGameIsStarted()) {
+			return;
+		}
+		
+		boolean bTurn = GameServiceUtil.checkSessionIsTurnNow(session);
+		if (!bTurn) {
+			sendMessageToOne(session, "MESSAGE|" + "현재 턴이 아닙니다.");
+			return;
+		}
+		
+		// 유닛이동
+		moveUtnit(session, messageValue);
+		
+		// 클라이언트 화면에 맵 그리기
+		drawMap(session);
+	}
+	
+	
+	/**
+	 * 클라이언트 화면에 맵 그리기
+	 * 
+	 * @param session
+	 */
+	public void drawMap(Session session) {
+		
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		String mapString = roomData.getMapStringForDraw();
+		
+		sendMessageToAll(session, "DRAW_MAP|" + mapString);
+	}
+	
+	
+	/**
+	 * 유닛이동
+	 * 
+	 * @param session
+	 */
+	public void moveUtnit(Session session, String messageValue) {
+		
+		// 0,0-1,0
+		
+		String leftStr = StringUtil.cutLeft(messageValue, "-");
+		String rightStr = StringUtil.cutRight(messageValue, "-");
+		
+		int col1 = StringUtil.parseInt(StringUtil.cutLeft(leftStr, ","));
+		int row1 = StringUtil.parseInt(StringUtil.cutRight(leftStr, ","));
+		
+		int col2 = StringUtil.parseInt(StringUtil.cutLeft(rightStr, ","));
+		int row2 = StringUtil.parseInt(StringUtil.cutRight(rightStr, ","));
+		
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		
+		try {
+			roomData.moveUnit(col1, row1, col2, row2);
+			
+		} catch (MessageException e) {
+			sendMessageToOne(session, "MESSAGE|" + e.getMessage());
+		}
+	}
+	
+	
+	/**
+	 * 다음턴 지정
+	 * 
+	 * @param session
+	 */
+	public void setNextTurn(Session session) {
+		
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		int nextTurnIndex = roomData.getNextTurnIndex();
+		
+		sendMessageToAll(session, "SET_TURN|" + nextTurnIndex);
 	}
 }

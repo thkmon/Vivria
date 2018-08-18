@@ -89,5 +89,15 @@ public class GameServiceUtil implements GameConst {
 	}
 	
 	
+	public static boolean checkSessionIsTurnNow(Session session) {
+		if (session == null) {
+			return false;
+		}
+		
+		RoomData roomData = getRoomData(session); 
+		
+		boolean bTurnNow = roomData.checkSessionIsTurnNow(session);
+		return bTurnNow;
+	}
 	
 }
