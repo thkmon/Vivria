@@ -115,13 +115,13 @@ public class RoomData implements GameConst {
 		
 		StringBuffer buff = new StringBuffer();
 		
-		for (int c=0; c<=10; c++) {
-			for (int r=0; r<=10; r++) {
+		for (int r=0; r<=10; r++) {
+			for (int c=0; c<=10; c++) {
 				if (buff.length() > 0) {
 					buff.append(";");
 				}
 				
-				buff.append(tileDataArray[c][r].toString());
+				buff.append(tileDataArray[r][c].toString());
 			}
 		}
 		
@@ -216,7 +216,6 @@ public class RoomData implements GameConst {
 		
 		// 번식모드
 		if (breedingMode) {
-			
 			// (5-1) 빈칸에 번식하면 크기가 1인 비브리아가 생기고,
 			if (vivriaCount2 == 0) {
 				tile2.setGamerIndex(tile1.getGamerIndex());
@@ -281,6 +280,7 @@ public class RoomData implements GameConst {
 	private void removeVivriaUnit(TileData tile) {
 		tile.setGamerIndex(-1);
 		tile.setVivriaCount(0);
+		tile.setKingVivria(false);
 	}
 	
 	
@@ -295,9 +295,9 @@ public class RoomData implements GameConst {
 		
 		tileDataArray = new TileData[11][11];
 		
-		for (int c=0; c<=10; c++) {
-			for (int r=0; r<=10; r++) {
-				tileDataArray[c][r] = new TileData();
+		for (int r=0; r<=10; r++) {
+			for (int c=0; c<=10; c++) {
+				tileDataArray[r][c] = new TileData();
 			}
 		}
 
@@ -305,52 +305,126 @@ public class RoomData implements GameConst {
 		
 		// 게이머 2명 이상 (공통)
 		if (gamerCount >= 2) {
-			for (int c=0; c<=3; c++) {
-				for (int r=0; r<=3; r++) {
-					tileDataArray[c][r].setCanMove(false);
+			for (int r=0; r<=3; r++) {
+				for (int c=0; c<=3; c++) {
+					tileDataArray[r][c].setCanMove(false);
 				}
 			}
 			
-			for (int c=7; c<=10; c++) {
-				for (int r=0; r<=3; r++) {
-					tileDataArray[c][r].setCanMove(false);
+			for (int r=7; r<=10; r++) {
+				for (int c=0; c<=3; c++) {
+					tileDataArray[r][c].setCanMove(false);
 				}
 			}
 			
-			for (int c=0; c<=3; c++) {
-				for (int r=7; r<=10; r++) {
-					tileDataArray[c][r].setCanMove(false);
+			for (int r=0; r<=3; r++) {
+				for (int c=7; c<=10; c++) {
+					tileDataArray[r][c].setCanMove(false);
 				}
 			}
 			
-			for (int c=7; c<=10; c++) { 
-				for (int r=7; r<=10; r++) {
-					tileDataArray[c][r].setCanMove(false);
+			for (int r=7; r<=10; r++) { 
+				for (int c=7; c<=10; c++) {
+					tileDataArray[r][c].setCanMove(false);
 				}
 			}
+			
+			createTileDataForPlayer1(tileDataArray);
+			createTileDataForPlayer2(tileDataArray);
+			
 		}
 		
 		// 게이머 3명 이하
 		if (gamerCount <= 3) {
 			// 아래 영역을 닫는다.
-			for (int c=4; c<=6; c++) {
-				for (int r=7; r<=10; r++) {
-					tileDataArray[c][r].setCanMove(false);
+			for (int r=7; r<=10; r++) {
+				for (int c=4; c<=6; c++) {
+					tileDataArray[r][c].setCanMove(false);
 				}
-			}		
+			}
+			
+		} else {
+			createTileDataForPlayer4(tileDataArray);
 		}
 		
 		// 게이머 2명 이하
 		if (gamerCount <= 2) {
 			// 위 영역을 닫는다.
-			for (int c=4; c<=6; c++) {
-				for (int r=0; r<=3; r++) {
-					tileDataArray[c][r].setCanMove(false);
+			for (int r=0; r<=3; r++) {
+				for (int c=4; c<=6; c++) {
+					tileDataArray[r][c].setCanMove(false);
 				}
 			}
+			
+		} else {
+			createTileDataForPlayer3(tileDataArray);
 		}
 		
 		return tileDataArray;
+	}
+	
+	
+	private void createTileDataForPlayer1(TileData[][] tileDataArray) {
+		int playerNumber = 0;
+		
+		for (int r=4; r<=6; r++) {
+			for (int c=0; c<=1; c++) {
+				tileDataArray[r][c].setGamerIndex(playerNumber);
+				tileDataArray[r][c].setVivriaCount(1);
+			}
+		}
+		
+		tileDataArray[5][0].setGamerIndex(playerNumber);
+		tileDataArray[5][0].setVivriaCount(10);
+		tileDataArray[5][0].setKingVivria(true);
+	}
+	
+	
+	private void createTileDataForPlayer2(TileData[][] tileDataArray) {
+		int playerNumber = 1;
+		
+		for (int r=4; r<=6; r++) {
+			for (int c=9; c<=10; c++) {
+				tileDataArray[r][c].setGamerIndex(playerNumber);
+				tileDataArray[r][c].setVivriaCount(1);
+			}
+		}
+		
+		tileDataArray[5][10].setGamerIndex(playerNumber);
+		tileDataArray[5][10].setVivriaCount(10);
+		tileDataArray[5][10].setKingVivria(true);
+	}
+	
+	
+	private void createTileDataForPlayer3(TileData[][] tileDataArray) {
+		int playerNumber = 2;
+		
+		for (int r=0; r<=1; r++) {
+			for (int c=4; c<=6; c++) {
+				tileDataArray[r][c].setGamerIndex(playerNumber);
+				tileDataArray[r][c].setVivriaCount(10);
+			}
+		}
+		
+		tileDataArray[0][5].setGamerIndex(playerNumber);
+		tileDataArray[0][5].setVivriaCount(1);
+		tileDataArray[0][5].setKingVivria(true);
+	}
+	
+	
+	private void createTileDataForPlayer4(TileData[][] tileDataArray) {
+		int playerNumber = 4;
+		
+		for (int r=9; r<=10; r++) {
+			for (int c=4; c<=6; c++) {
+				tileDataArray[r][c].setGamerIndex(playerNumber);
+				tileDataArray[r][c].setVivriaCount(10);
+			}
+		}
+		
+		tileDataArray[10][5].setGamerIndex(playerNumber);
+		tileDataArray[10][5].setVivriaCount(10);
+		tileDataArray[10][5].setKingVivria(true);
 	}
 	
 	

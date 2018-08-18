@@ -10,7 +10,7 @@ public class TileData implements GameConst {
 	// - 숫자가 몇인지
 	
 	// 통행가능한 타일인지
-	private boolean canMove = false;
+	private boolean canMove = true;
 	private int gamerIndex = -1;
 	private int vivriaCount = 0;
 	private boolean kingVivria = false;
@@ -32,20 +32,21 @@ public class TileData implements GameConst {
 		}
 		
 		// 색상
-		if (gamerIndex == 1) {
+		if (gamerIndex == 0) {
 			result += "R";
 			
-		} else if (gamerIndex == 2) {
+		} else if (gamerIndex == 1) {
 			result += "Y";
 
-		} else if (gamerIndex == 3) {
+		} else if (gamerIndex == 2) {
 			result += "B";
 			
-		} else if (gamerIndex == 4) {
+		} else if (gamerIndex == 3) {
 			result += "G";
 			
 		} else {
-			result += "?";
+			// 알 수 없음
+			result += "Z";
 		}
 		
 		result += gamerIndex;
@@ -57,14 +58,12 @@ public class TileData implements GameConst {
 		} else if (vivriaCount == 10) {
 			result += "A";
 			
-		} else if (vivriaCount == 11) {
-			result += "B";
-			
 		} else if (1 <= vivriaCount && vivriaCount <= 9) {
 			result += vivriaCount;
 		
 		} else {
-			result += "?";
+			// 알 수 없음
+			result += "Z";
 		}
 		
 		return result;

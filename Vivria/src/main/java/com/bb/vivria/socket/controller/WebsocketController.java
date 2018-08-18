@@ -7,8 +7,8 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
+import com.bb.vivria.data.MessageException;
 import com.bb.vivria.service.GameService;
-import com.bb.vivria.socket.util.UserSessionUtil;
 
 @ServerEndpoint("/websocket")
 public class WebsocketController {
@@ -27,7 +27,21 @@ public class WebsocketController {
 	 */
 	@OnMessage
 	public String handleMessage(String message, Session session) {
-		new GameService().handleClientMessage(message, session);
+		
+		GameService gameService = null;
+		
+		try {
+			gameService = new GameService();
+			gameService.handleClientMessage(message, session);
+		
+		} catch (MessageException e) {
+			gameService.sendMessageToOne(session, "MESSAGE|" + e.getMessage());
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			gameService.sendMessageToOne(session, "MESSAGE|" + e.getMessage());
+		}
+		
 		return null;
 	}
 	

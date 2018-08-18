@@ -52,7 +52,7 @@ public class GameService implements GameConst {
 	/**
 	 * 클라이언트로부터 메시지를 받았을 때 호출되는 이벤트 
 	 */
-	public void handleClientMessage(String message, Session session) {
+	public void handleClientMessage(String message, Session session) throws MessageException, Exception {
 		if (session == null) {
 			return;
 		}
@@ -70,6 +70,9 @@ public class GameService implements GameConst {
 		if (pipeIndex > -1) {
 			messageKey = message.substring(0, pipeIndex);
 			messageValue = message.substring(pipeIndex + 1);
+		} else {
+			messageKey = message;
+			messageValue = "";
 		}
 		
 		if (messageKey == null || messageKey.length() == 0) {
@@ -128,6 +131,14 @@ public class GameService implements GameConst {
 	 * 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
 	 */
 	private boolean sendMessageToAll(Session session, String message) {
+		return sendMessageToAll(session, message, null);
+	}
+	
+	
+	/**
+	 * 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
+	 */
+	private boolean sendMessageToAll(Session session, String message, String messageToSingleSession) {
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
 		if (userSessionList == null) {
@@ -151,6 +162,13 @@ public class GameService implements GameConst {
 				continue;
 			}
 
+			if (messageToSingleSession != null && messageToSingleSession.length() > 0) {
+				if (session.getId().equals(singleSession.getId())) {
+					singleSession.getAsyncRemote().sendText(messageToSingleSession);
+					continue;
+				}
+			}
+			
 			singleSession.getAsyncRemote().sendText(message);
 		}
 
@@ -158,7 +176,7 @@ public class GameService implements GameConst {
 	}
 	
 	
-	private boolean sendMessageToOne(Session singleSession, String message) {
+	public boolean sendMessageToOne(Session singleSession, String message) {
 		
 		if (singleSession == null) {
 			return false;
@@ -255,15 +273,15 @@ public class GameService implements GameConst {
 	 * @param session
 	 * @return
 	 */
-	private boolean checkAllGamersAreReadyToGame(Session session) {
+	private boolean checkAllGamersAreReadyToGame(Session session) throws MessageException, Exception {
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
 		if (userSessionList == null) {
 			return false;
 		}
 
 		int sessionCount = userSessionList.size();
-		if (sessionCount < 1) {
-			return false;
+		if (sessionCount < 2) {
+			throw new MessageException("혼자서는 게임을 시작할 수 없습니다.");
 		}
 
 		int gamerCount = 0;
@@ -301,11 +319,11 @@ public class GameService implements GameConst {
 			}
 		}
 
-		if (gamerCount > 1) {
-			return true;
-		}
+		if (gamerCount <= 1) {
+			throw new MessageException("참가자가 2명 이상 필요합니다.");
+		} 
 		
-		return false;
+		return true;
 	}
 	
 	
@@ -359,6 +377,10 @@ public class GameService implements GameConst {
 			}
 		}
 		
+		if (newNickName.indexOf("|") > -1) {
+			newNickName = newNickName.replace("|", "");
+		}
+		
 		userSession.setUserNickName(newNickName);
 	}
 	
@@ -377,31 +399,56 @@ public class GameService implements GameConst {
 		// userType == 1 : 게이머
 		// userType == 2 : 옵저버(관전모드)
 		int newUserType = 1;
-		if (messageValue.equals("1") || messageValue.equals("2")) {
-			newUserType = Integer.parseInt(messageValue);
-		} else {
-			return;
-		}
 		
-		// 게이머 모드가 1명도 없으면 게이머 모드로 강제 전환(방장이기 때문)
-		// 게이머 모드가 4명 이상일 경우 관전 모드로 강제 전환
-		int gamerCount = getCountOfUserTypeGamer(session);
-		if (gamerCount < 1) {
-			// 게이머 모드
-			newUserType = 1;
-			
-			// 방장으로 설정
-			userSession.setRoomChief(true);
-			
-			// 방장은 언제나 게임 준비상태임
-			userSession.setReadyToGame(true);
-			
-		} else if (gamerCount >= 4) {
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		if (roomData.isGameIsStarted()) {
+			// 게임 이미 시작되었다면 무조건 관전모드
 			// 관전 모드
 			newUserType = 2;
+			
+		} else {
+			if (messageValue.equals("1") || messageValue.equals("2")) {
+				newUserType = Integer.parseInt(messageValue);
+			} else {
+				return;
+			}
+			
+			// 게이머 모드가 1명도 없으면 게이머 모드로 강제 전환(방장이기 때문)
+			// 게이머 모드가 4명 이상일 경우 관전 모드로 강제 전환
+			int gamerCount = getCountOfUserTypeGamer(session);
+			if (gamerCount < 1) {
+				// 게이머 모드
+				newUserType = 1;
+				
+				// 방장으로 설정
+				userSession.setRoomChief(true);
+				
+				// 방장은 언제나 게임 준비상태임
+				userSession.setReadyToGame(true);
+				
+			} else if (gamerCount >= 4) {
+				// 관전 모드
+				newUserType = 2;
+			}
 		}
 		
 		userSession.setUserType(newUserType);
+		
+		
+		// 접속한 개인에게는 SET_TYPE_CHIEF 또는 SET_TYPE_GAMER 또는 SET_TYPE_OBSERVER 를 던져주고,
+		// 나머지 접속자에게는 CHAT 을 던져주자.
+		String messageToSingleSession = "";
+		
+		if (userSession.isRoomChief()) {
+			messageToSingleSession = "SET_TYPE_CHIEF|***** [" + userSession.getUserNickName() + "] 님이 접속하였습니다. *****";
+			
+		} else if (newUserType == 1) { 
+			messageToSingleSession = "SET_TYPE_GAMER|***** [" + userSession.getUserNickName() + "] (관전모드) 님이 접속하였습니다. *****";
+			
+		} else if (newUserType == 2) {
+			messageToSingleSession = "SET_TYPE_OBSERVER|***** [" + userSession.getUserNickName() + "] 님이 접속하였습니다. *****";
+		}
+		
 		
 		String msg = "";
 		if (newUserType == USER_TYPE_OBSERVER) {
@@ -410,7 +457,7 @@ public class GameService implements GameConst {
 			msg = "CHAT|***** [" + userSession.getUserNickName() + "] 님이 접속하였습니다. *****";
 		}
 
-		sendMessageToAll(session, msg);
+		sendMessageToAll(session, msg, messageToSingleSession);
 	}
 	
 	
@@ -420,7 +467,7 @@ public class GameService implements GameConst {
 	 * @param messageValue
 	 * @param session
 	 */
-	private void handleStartGame(String messageValue, Session session) {
+	private void handleStartGame(String messageValue, Session session) throws MessageException, Exception {
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
 			return;
@@ -433,28 +480,27 @@ public class GameService implements GameConst {
 		
 		// 방장 외에는 게임 시작할 수 없다.
 		if (!userSession.isRoomChief()) {
-			return;
+			throw new MessageException("방장 외에는 게임을 시작할 수 없습니다.");
 		}
 		
 		// 게임이 이미 시작되었으면 시작할 수 없다.
 		if (roomData.isGameIsStarted()) {
-			return;
+			throw new MessageException("게임이 이미 시작된 상태입니다.");
 		}
 		
 		// 게이머
 		boolean bAllGamersAreReadyToGame = checkAllGamersAreReadyToGame(session);
 		if (!bAllGamersAreReadyToGame) {
-			return;
+			throw new MessageException("모든 참가자가 준비 상태여야 게임을 시작할 수 있습니다.");
 		}
 		
 		// 게임시작
 		roomData.startNewGame(session);
 		
 		// 클라이언트 화면에 맵 그리기
-		drawMap(session);
+		drawMap(session, true);
 		
-		// 다음턴 지정
-		setNextTurn(session);
+		throw new MessageException("게임 시작!");
 	}
 	
 	
@@ -464,7 +510,7 @@ public class GameService implements GameConst {
 	 * @param messageValue
 	 * @param session
 	 */
-	private void handleReadyToGame(String messageValue, Session session) {
+	private void handleReadyToGame(String messageValue, Session session) throws MessageException, Exception {
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
 			return;
@@ -477,19 +523,22 @@ public class GameService implements GameConst {
 		
 		// 방장은 게임 준비할 수 없다.
 		if (userSession.isRoomChief()) {
-			return;
+			throw new MessageException("방장은 게임을 준비할 수 없습니다.");
 		}
 		
 		// 게임이 이미 시작되었으면 준비할 수 없다.
 		if (roomData.isGameIsStarted()) {
-			return;
+			throw new MessageException("게임이 이미 시작된 상태입니다.");
 		}
 		
 		// 게임 준비 상태로 설정. 이미 준비 상태일 경우 준비 해제한다.
 		if (!userSession.isReadyToGame()) {
 			userSession.setReadyToGame(true);
+			throw new MessageException("준비 상태로 설정하였습니다.");
 		} else {
-			userSession.setReadyToGame(false);
+			throw new MessageException("이미 준비 상태로 설정하였습니다.");
+//			userSession.setReadyToGame(false);
+//			throw new MessageException("준비 상태를 해제하였습니다.");
 		}
 	}
 	
@@ -500,7 +549,7 @@ public class GameService implements GameConst {
 	 * @param messageValue
 	 * @param session
 	 */
-	private void handleMoveUnit(String messageValue, Session session) {
+	private void handleMoveUnit(String messageValue, Session session) throws MessageException, Exception {
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
 			return;
@@ -523,10 +572,12 @@ public class GameService implements GameConst {
 		}
 		
 		// 유닛이동
-		moveUtnit(session, messageValue);
+		boolean bMoved = moveUnit(session, messageValue);
 		
-		// 클라이언트 화면에 맵 그리기
-		drawMap(session);
+		if (bMoved) {
+			// 클라이언트 화면에 맵 그리기
+			drawMap(session, true);
+		}
 	}
 	
 	
@@ -535,12 +586,24 @@ public class GameService implements GameConst {
 	 * 
 	 * @param session
 	 */
-	public void drawMap(Session session) {
+	public void drawMap(Session session, boolean changeToNextTurn) {
 		
 		RoomData roomData = GameServiceUtil.getRoomData(session);
 		String mapString = roomData.getMapStringForDraw();
 		
-		sendMessageToAll(session, "DRAW_MAP|" + mapString);
+		String userNickName = "";
+		if (changeToNextTurn) {
+			// 다음턴 지정
+			roomData.getNextTurnIndex();
+			
+			UserSession userSession = GameServiceUtil.getUserSession(session);
+			userNickName = userSession.getUserNickName();
+			if (userNickName.indexOf("|") > -1) {
+				userNickName = userNickName.replace("|", "");
+			}
+		}
+		
+		sendMessageToAll(session, "DRAW_MAP|" + userNickName + "|" + mapString);
 	}
 	
 	
@@ -549,40 +612,36 @@ public class GameService implements GameConst {
 	 * 
 	 * @param session
 	 */
-	public void moveUtnit(Session session, String messageValue) {
+	public boolean moveUnit(Session session, String messageValue) throws Exception {
+		
+		boolean bResult = false;
 		
 		// 0,0-1,0
 		
-		String leftStr = StringUtil.cutLeft(messageValue, "-");
-		String rightStr = StringUtil.cutRight(messageValue, "-");
+		String leftStr = StringUtil.cutLeft(messageValue, "|");
+		String rightStr = StringUtil.cutRight(messageValue, "|");
 		
-		int col1 = StringUtil.parseInt(StringUtil.cutLeft(leftStr, ","));
-		int row1 = StringUtil.parseInt(StringUtil.cutRight(leftStr, ","));
+		int col1 = StringUtil.parseInt(StringUtil.cutLeft(leftStr, "_"));
+		int row1 = StringUtil.parseInt(StringUtil.cutRight(leftStr, "_"));
 		
-		int col2 = StringUtil.parseInt(StringUtil.cutLeft(rightStr, ","));
-		int row2 = StringUtil.parseInt(StringUtil.cutRight(rightStr, ","));
+		int col2 = StringUtil.parseInt(StringUtil.cutLeft(rightStr, "_"));
+		int row2 = StringUtil.parseInt(StringUtil.cutRight(rightStr, "_"));
 		
 		RoomData roomData = GameServiceUtil.getRoomData(session);
 		
 		try {
 			roomData.moveUnit(col1, row1, col2, row2);
+			bResult = true;
 			
 		} catch (MessageException e) {
+			bResult = false;
 			sendMessageToOne(session, "MESSAGE|" + e.getMessage());
+			
+		} catch (Exception e) {
+			bResult = false;
+			throw e;
 		}
-	}
-	
-	
-	/**
-	 * 다음턴 지정
-	 * 
-	 * @param session
-	 */
-	public void setNextTurn(Session session) {
 		
-		RoomData roomData = GameServiceUtil.getRoomData(session);
-		int nextTurnIndex = roomData.getNextTurnIndex();
-		
-		sendMessageToAll(session, "SET_TURN|" + nextTurnIndex);
+		return bResult;
 	}
 }
