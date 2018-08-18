@@ -9,8 +9,10 @@ String.prototype.trim = function() {
     return this.replace(/(^\s*)|(\s*$)/g, "");
 }
 
+var g_gameStart = false;
 var g_selectMode = false;
 var g_selectedTile = "";
+var g_tileArray = null;
 
 var g_webSocket = null;
 window.onload = function() {
@@ -110,6 +112,14 @@ window.onload = function() {
 		}
 	
 		if (messageKey == "DRAW_MAP") {
+			
+			if (!g_gameStart) {
+				document.getElementById("startGameButton").style.display = "none";
+				document.getElementById("readyToGameButton").style.display = "none";
+				document.getElementById("releaseSelectionButton").style.display = "";
+				g_gameStart = true;
+			} 
+			
 			var nextPipeIndex = messageValue.indexOf("|");
 			if (nextPipeIndex > -1) {
 				var nextTurnNickName = messageValue.substring(0, nextPipeIndex);
@@ -153,7 +163,7 @@ function addLineToChatBox(_line) {
 	
 	var chatBoxArea = document.getElementById("chatBoxArea");
 	chatBoxArea.value += _line + "\n";
-	chatBoxArea.scrollTop = chatBoxArea.scrollHeight;	
+	chatBoxArea.scrollTop = chatBoxArea.scrollHeight;
 }
 
 
@@ -166,10 +176,8 @@ function sendButton_onclick() {
 		return false;
 	}
 	
-	var chatBoxArea = document.getElementById("chatBoxArea");
-	
 	if (g_webSocket == null || g_webSocket.readyState == 3) {
-		chatBoxArea.value += "Server is disconnected.\n";
+		addLineToChatBox("Server is disconnected.");
 		return false;
 	}
 	
@@ -224,21 +232,25 @@ function drawMap(_messageData) {
 	}
 	
 	var singleTile = "";
-	var tileArray = _messageData.split(";");
+	g_tileArray = _messageData.split(";");
 	
 	var elem = null;
+	var elem2 = null;
 	var index = 0;
 	for (var r=0; r<=10; r++) {
 		for (var c=0; c<=10; c++) {
-			singleTile = tileArray[index];
+			singleTile = g_tileArray[index];
 			
 			elem = document.getElementById("tile" + r + "_" + c);
+			elem2 = document.getElementById("tile_span" + r + "_" + c);
 			
 			if (singleTile == "XXX") {
 				elem.style.backgroundImage = "url('/resources/img/vivria/xtile.png')";
+				elem2.innerText = "";
 				
 			} else if (singleTile == "OOO") {
 				elem.style.backgroundImage = "url('/resources/img/vivria/otile.png')";
+				elem2.innerText = "";
 				
 			} else {
 				
@@ -257,17 +269,22 @@ function drawMap(_messageData) {
 					color = "green";
 				}
 				
+				var tileText = "";
 				var number = "";
 				var lastChar = singleTile.substring(2, 3);
 				
 				if (lastChar == "K") {
 					number = "4";
+					tileText = "K";
 					
 				} else if (lastChar == "A") {
 					number = "5";
+					tileText = "10";
 					
 				} else {
 					var vivriaCount = parseInt(lastChar, 10);
+					tileText = vivriaCount + "";
+					
 					if (1 <= vivriaCount && vivriaCount <= 3) {
 						number = "1";
 						
@@ -280,7 +297,7 @@ function drawMap(_messageData) {
 				}
 				
 				elem.style.backgroundImage = "url('/resources/img/vivria/" + color + number + ".png')";
-				
+				elem2.innerText = tileText;
 			}
 			
 			index++;
@@ -291,23 +308,22 @@ function drawMap(_messageData) {
 
 function tile_onclick(_row, _col) {
 	if (g_selectMode) {
-		var elem = document.getElementById("tile" + g_selectedTile);
-		elem.style.border = "1px solid #b9b5f9";
-		
 		if (g_selectedTile == (_row + "_" + _col)) {
-			g_selectMode = false;
+			releaseSelection();
 			return;
 		}
 		
 		// 서버로 메시지 전송
 		var moveText = g_selectedTile + "|" + _row + "_" + _col;
-		alert(moveText);
+		// alert(moveText);
 		g_webSocket.send("MOVE_UNIT|" + moveText);
-		g_selectMode = false;
+		releaseSelection();
 			
 	} else {
 		var elem = document.getElementById("tile" + _row + "_" + _col);
 		if (elem != null) {
+			showTileMark(_row, _col);
+			
 			elem.style.border = "1px solid blue";
 			g_selectedTile = _row + "_" + _col;
 			g_selectMode = true;
@@ -316,15 +332,123 @@ function tile_onclick(_row, _col) {
 }
 
 
-// 선택해제
-function releaseSelectionButton_onclick() {
+function showTileMark(_row, _col) {
+	
+	if (g_tileArray == null) {
+		return false;
+	}
+	
+	var index = getTileIndex(_row, _col);
+	var singleTile = g_tileArray[index];
+	
+	if (singleTile == null || singleTile.length == 0) {
+		return false;
+	}
+	
+	if (singleTile == "XXX" || singleTile == "OOO") {
+		return false;
+	}
+	
+	var point = 0;
+	var lastChar = singleTile.substring(2, 3);
+	
+	// 비브리아 크기가 1~3이면 3칸 이동, 4~6은 2칸이동, 7~9는 1칸 이동, 10과 왕은 이동 불가(1칸 번식)
+	if (lastChar == "K" || lastChar == "A") {
+		point = 1;
+		
+	} else {
+		var vivriaCount = parseInt(lastChar, 10);
+		if (1 <= vivriaCount && vivriaCount <= 3) {
+			point = 3;
+			
+		} else if (4 <= vivriaCount && vivriaCount <= 6) {
+			point = 2;
+		
+		} else if (7 <= vivriaCount && vivriaCount <= 9) {
+			point = 1;
+		}
+	}
+	
+	var bRow = _row - point;
+	var eRow = _row + point; 
+	var bCol = _col - point;
+	var eCol = _col + point;
+	
+	if (bRow < 0) {
+		bRow = 0;
+	}
+	
+	if (bCol < 0) {
+		bCol = 0;
+	}
+	
+	if (eRow > 10) {
+		eRow = 10;
+	}
+	
+	if (eCol > 10) {
+		eCol = 10;
+	}
 	
 	var elem = null;
+	var rGap = 0;
+	var cGap = 0;
+	for (var r=bRow; r<=eRow; r++) {
+		for (var c=bCol; c<=eCol; c++) {
+			rGap = _row - r;
+			if (rGap < 0) {
+				rGap = rGap * -1;
+			}
+			
+			cGap = _col - c;
+			if (cGap < 0) {
+				cGap = cGap * -1;
+			}
+			
+			if (rGap + cGap > point) {
+				continue;
+			}
+			
+			index = getTileIndex(r, c);
+			singleTile = g_tileArray[index];
+			
+			if (singleTile == "XXX") {
+				continue;
+			}
+			
+			elem = document.getElementById("tile_cover" + r + "_" + c);
+			if (elem != null) {
+				elem.style.display = "";
+			}
+		}
+	}
+}
+
+
+function getTileIndex(_row, _col) {
+	return (_row * 11) + _col;
+}
+
+
+// 선택해제
+function releaseSelectionButton_onclick() {
+	releaseSelection();
+}
+
+
+function releaseSelection() {
+	var elem = null;
+	var elem2 = null;
 	for (var r=0; r<=10; r++) {
 		for (var c=0; c<=10; c++) {
 			elem = document.getElementById("tile" + r + "_" + c);
 			if (elem != null) {
 				elem.style.border = "1px solid #b9b5f9";
+			}
+			
+			elem2 = document.getElementById("tile_cover" + r + "_" + c);
+			if (elem2 != null) {
+				elem2.style.display = "none";
 			}
 		}
 	}
@@ -332,8 +456,30 @@ function releaseSelectionButton_onclick() {
 	g_selectedTile = "";
 	g_selectMode = false;
 }
+
+
+// 최상단
+function scrollUpButton_onclick() {
+	var chatBoxArea = document.getElementById("chatBoxArea");
+	chatBoxArea.scrollTop = 0;
+}
+
+
+// 최하단
+function scrollDownButton_onclick() {
+	var chatBoxArea = document.getElementById("chatBoxArea");
+	chatBoxArea.scrollTop = chatBoxArea.scrollHeight;
+}
 </script>
 <style type="text/css">
+	.tile_cover {
+		width: 50px;
+		height: 50px;
+		border: 1px solid #b9b5f9;
+		cursor: pointer;
+		background: rgba(0, 0, 255, 0.5);
+	}
+	
 	.tile {
 		width: 50px;
 		height: 50px;
@@ -361,7 +507,7 @@ function releaseSelectionButton_onclick() {
 	<!-- <input id="disconnectButton" class="basic_button" value="연결끊기" type="button" onclick="disconnectButton_onclick()"> -->
 	<input id="readyToGameButton" class="basic_button" value="게임준비" type="button" style="display: none;" onclick="readyToGameButton_onclick()">
 	<input id="startGameButton" class="basic_button" value="게임시작" type="button" style="display: none;" onclick="startGameButton_onclick()">
-	<input id="releaseSelectionButton" class="basic_button" value="선택해제" type="button" onclick="releaseSelectionButton_onclick()">
+	<input id="releaseSelectionButton" class="basic_button" value="선택해제" type="button" style="display: none;" onclick="releaseSelectionButton_onclick()">
 	<br>
 	<div style="border: 0px solid #000000; width: 600px; height: 600px; margin: 0 auto;">
 		<%
@@ -371,7 +517,9 @@ function releaseSelectionButton_onclick() {
 						out.print("<div>");
 					}
 					
-					out.print("<div id=\"tile" + r + "_" + c + "\" class=\"tile lfloat\" onclick=\"tile_onclick(" + r + "," + c + ")\">" + r + "," + c + "</div>");
+					String tileCoverDiv = "<span id=\"tile_span" + r + "_" + c + "\" style=\"position: fixed;\"></span>" +
+										  "<div id=\"tile_cover" + r + "_" + c + "\" class=\"tile_cover lfloat\" style=\"display: none; position: fixed;\"></div>";
+					out.print("<div id=\"tile" + r + "_" + c + "\" class=\"tile lfloat\" onclick=\"tile_onclick(" + r + "," + c + ")\">" + tileCoverDiv + "</div>");
 					
 					if (c == 10) {
 						out.print("</div>");
@@ -383,6 +531,8 @@ function releaseSelectionButton_onclick() {
 	<br>
 	<input id="inputMsgBox" style="width: 250px;" type="text" onkeypress="inputMsgBox_onkeypress()">
 	<input id="sendButton" class="basic_button" value="전송" type="button" onclick="sendButton_onclick()">
+	<input id="scrollUpButton" class="basic_button" value="최상단" type="button" onclick="scrollUpButton_onclick()">
+	<input id="scrollDownButton" class="basic_button" value="최하단" type="button" onclick="scrollDownButton_onclick()">
 	<br>
 	<textarea id="chatBoxArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
 </body>

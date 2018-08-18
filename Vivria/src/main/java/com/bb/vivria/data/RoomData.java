@@ -155,7 +155,7 @@ public class RoomData implements GameConst {
 		}
 		
 		if (tile1.getGamerIndex() != gamerTurnIndex) {
-			throw new MessageException("남의 캐릭터는 이동시킬 수 없습니다.");
+			throw new MessageException("남의 캐릭터는 제어할 수 없습니다.");
 		}
 		
 		int gamerIndex1 = tile1.getGamerIndex();
@@ -402,23 +402,23 @@ public class RoomData implements GameConst {
 		for (int r=0; r<=1; r++) {
 			for (int c=4; c<=6; c++) {
 				tileDataArray[r][c].setGamerIndex(playerNumber);
-				tileDataArray[r][c].setVivriaCount(10);
+				tileDataArray[r][c].setVivriaCount(1);
 			}
 		}
 		
 		tileDataArray[0][5].setGamerIndex(playerNumber);
-		tileDataArray[0][5].setVivriaCount(1);
+		tileDataArray[0][5].setVivriaCount(10);
 		tileDataArray[0][5].setKingVivria(true);
 	}
 	
 	
 	private void createTileDataForPlayer4(TileData[][] tileDataArray) {
-		int playerNumber = 4;
+		int playerNumber = 3;
 		
 		for (int r=9; r<=10; r++) {
 			for (int c=4; c<=6; c++) {
 				tileDataArray[r][c].setGamerIndex(playerNumber);
-				tileDataArray[r][c].setVivriaCount(10);
+				tileDataArray[r][c].setVivriaCount(1);
 			}
 		}
 		
