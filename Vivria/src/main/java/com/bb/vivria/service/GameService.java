@@ -124,6 +124,11 @@ public class GameService implements GameConst {
 			handleMoveUnit(messageValue, session);
 			return;
 		}
+		
+		if (messageKey.equals("REFRESH_MAP")) {
+			handleRefreshMap(session);
+			return;
+		}
 	}
 	
 	
@@ -440,13 +445,13 @@ public class GameService implements GameConst {
 		String messageToSingleSession = "";
 		
 		if (userSession.isRoomChief()) {
-			messageToSingleSession = "SET_TYPE_CHIEF|***** [" + userSession.getUserNickName() + "] 님이 접속하였습니다. *****";
+			messageToSingleSession = "SET_TYPE_CHIEF|***** [" + userSession.getUserNickName() + "] (방장) 님이 접속하였습니다. *****";
 			
-		} else if (newUserType == 1) { 
-			messageToSingleSession = "SET_TYPE_GAMER|***** [" + userSession.getUserNickName() + "] (관전모드) 님이 접속하였습니다. *****";
+		} else if (newUserType == USER_TYPE_GAMER) { 
+			messageToSingleSession = "SET_TYPE_GAMER|***** [" + userSession.getUserNickName() + "] 님이 접속하였습니다. *****";
 			
-		} else if (newUserType == 2) {
-			messageToSingleSession = "SET_TYPE_OBSERVER|***** [" + userSession.getUserNickName() + "] 님이 접속하였습니다. *****";
+		} else if (newUserType == USER_TYPE_OBSERVER) {
+			messageToSingleSession = "SET_TYPE_OBSERVER|***** [" + userSession.getUserNickName() + "] (관전모드) 님이 접속하였습니다. *****";
 		}
 		
 		
@@ -595,15 +600,32 @@ public class GameService implements GameConst {
 		if (changeToNextTurn) {
 			// 다음턴 지정
 			roomData.getNextTurnIndex();
-			
-			UserSession userSession = GameServiceUtil.getUserSession(session);
-			userNickName = userSession.getUserNickName();
-			if (userNickName.indexOf("|") > -1) {
-				userNickName = userNickName.replace("|", "");
-			}
+		}
+		
+		UserSession userSession = GameServiceUtil.getUserSession(session);
+		userNickName = userSession.getUserNickName();
+		if (userNickName.indexOf("|") > -1) {
+			userNickName = userNickName.replace("|", "");
 		}
 		
 		sendMessageToAll(session, "DRAW_MAP|" + userNickName + "|" + mapString);
+	}
+	
+	
+	public void drawMapToOne(Session session) {
+		
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		String mapString = roomData.getMapStringForDraw();
+		
+		// 현재턴 참가자 닉네임
+		String userNickName = "";
+		UserSession userSession = GameServiceUtil.getUserSession(session);
+		userNickName = userSession.getUserNickName();
+		if (userNickName.indexOf("|") > -1) {
+			userNickName = userNickName.replace("|", "");
+		}
+		
+		sendMessageToOne(session, "DRAW_MAP|" + userNickName + "|" + mapString);
 	}
 	
 	
@@ -643,5 +665,21 @@ public class GameService implements GameConst {
 		}
 		
 		return bResult;
+	}
+	
+	
+	private void handleRefreshMap(Session session) throws MessageException, Exception {
+		UserSession userSession = GameServiceUtil.getUserSession(session);
+		if (userSession == null) {
+			return;
+		}
+		
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		if (roomData == null) {
+			return;
+		}
+		
+		// 클라이언트 화면에 맵 그리기
+		drawMapToOne(session);
 	}
 }

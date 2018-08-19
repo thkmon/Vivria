@@ -108,6 +108,9 @@ window.onload = function() {
 			document.getElementById("startGameButton").style.display = "none";
 			document.getElementById("readyToGameButton").style.display = "none";
 			addLineToChatBox(messageValue);
+			
+			// 서버로 메시지 전송
+			g_webSocket.send("REFRESH_MAP");
 			return;
 		}
 	
