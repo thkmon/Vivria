@@ -481,6 +481,57 @@ public class RoomData implements GameConst {
 	}
 	
 	
+	public String getUserListString(Session session) {
+		
+		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
+		if (userSessionList == null) {
+			return null;
+		}
+
+		int sessionCount = userSessionList.size();
+		if (sessionCount < 1) {
+			return null;
+		}
+
+		StringBuffer resultBuff = new StringBuffer();
+		
+		UserSession singleUserSession = null;
+		Session singleSession = null;
+
+		for (int i = 0; i < sessionCount; i++) {
+			singleSession = userSessionList.getOriginSession(i);
+			if (singleSession == null) {
+				continue;
+			}
+
+			if (!singleSession.isOpen()) {
+				continue;
+			}
+			
+			singleUserSession = userSessionList.get(i);
+			if (singleUserSession == null) {
+				continue;
+			}
+			
+			resultBuff.append(singleUserSession.getUserNickName());
+
+			if (singleUserSession.isRoomChief()) {
+				resultBuff.append("(방장)");
+				
+			} else if (singleUserSession.getUserType() == USER_TYPE_GAMER) {
+				// resultBuff.append("(참가)");
+				
+			} else if (singleUserSession.getUserType() == USER_TYPE_OBSERVER) {
+				resultBuff.append("(관전)");
+			}
+			
+			resultBuff.append(";");
+		}
+
+		return resultBuff.toString();
+	}
+	
+	
 	
 	public boolean checkSessionIsTurnNow(Session session) {
 		

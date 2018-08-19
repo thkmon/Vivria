@@ -100,4 +100,16 @@ public class GameServiceUtil implements GameConst {
 		return bTurnNow;
 	}
 	
+	
+	public static String getUserListString(Session session) {
+		if (session == null) {
+			return "";
+		}
+		
+		RoomData roomData = getRoomData(session); 
+		
+		String userListString = roomData.getUserListString(session);
+		return userListString;
+	}
+	
 }

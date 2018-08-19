@@ -44,6 +44,10 @@ public class GameService implements GameConst {
 		
 		// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
 		String msg = "CHAT|***** [" + userSession.getUserNickName() + "] 님의 접속이 해제되었습니다. *****";
+		
+		String userListString = GameServiceUtil.getUserListString(session);
+		msg = msg + "/+/" + "SET_USERLIST|" + userListString;
+		
 		sendMessageToAll(session, msg);
 		return;
 	}
@@ -340,6 +344,24 @@ public class GameService implements GameConst {
 			return;
 		}
 		
+		// 채팅시에 결합문자는 막자.
+		if (chatContent.indexOf("|") > -1) {
+			chatContent = chatContent.replace("|", "");
+		}
+		
+		// 채팅시에 결합문자는 막자.
+		if (chatContent.indexOf("/+/") > -1) {
+			chatContent = chatContent.replace("/+/", "");
+		}
+		
+		if (chatContent.indexOf("\r") > -1) {
+			chatContent = chatContent.replace("\r", "");
+		}
+		
+		if (chatContent.indexOf("\n") > -1) {
+			chatContent = chatContent.replace("\n", "");
+		}
+		
 		String msg = "CHAT|[" + userSession.getUserNickName() + "] " + chatContent;
 		sendMessageToAll(session, msg);
 	}
@@ -382,8 +404,19 @@ public class GameService implements GameConst {
 			}
 		}
 		
+		// 닉네임 입력시 결합문자는 막자.
 		if (newNickName.indexOf("|") > -1) {
 			newNickName = newNickName.replace("|", "");
+		}
+		
+		// 닉네임 입력시 결합문자는 막자.
+		if (newNickName.indexOf("/+/") > -1) {
+			newNickName = newNickName.replace("/+/", "");
+		}
+		
+		// 닉네임 입력시 결합문자는 막자.
+		if (newNickName.indexOf(";") > -1) {
+			newNickName = newNickName.replace(";", "");
 		}
 		
 		userSession.setUserNickName(newNickName);
@@ -461,6 +494,11 @@ public class GameService implements GameConst {
 		} else {
 			msg = "CHAT|***** [" + userSession.getUserNickName() + "] 님이 접속하였습니다. *****";
 		}
+		
+		
+		String userListString = GameServiceUtil.getUserListString(session);
+		msg = msg + "/+/" + "SET_USERLIST|" + userListString;
+		messageToSingleSession = messageToSingleSession + "/+/" + "SET_USERLIST|" + userListString;
 
 		sendMessageToAll(session, msg, messageToSingleSession);
 	}

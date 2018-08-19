@@ -69,73 +69,17 @@ window.onload = function() {
 			return false;
 		}
 		
-		var messageKey = "";
-		var messageValue = "";
-		
-		var messageData = message.data;
-		var pipeIndex = messageData.indexOf("|");
-		if (pipeIndex > -1) {
-			messageKey = messageData.substring(0, pipeIndex);
-			messageValue = messageData.substring(pipeIndex + 1);
-		} else {
-			messageKey = messageData;
-			messageValue = "";
-		}
-		
-		if (messageKey == "CHAT") {
-			addLineToChatBox(messageValue);
-			return;
-		}
-		
-		if (messageKey == "MESSAGE") {
-			alert(messageValue);
-			return;
-		}
-		
-		if (messageKey == "SET_TYPE_CHIEF") {
-			document.getElementById("startGameButton").style.display = "";
-			document.getElementById("readyToGameButton").style.display = "none";
-			addLineToChatBox(messageValue);
-			return;
-			
-		} else if (messageKey == "SET_TYPE_GAMER") {
-			document.getElementById("startGameButton").style.display = "none";
-			document.getElementById("readyToGameButton").style.display = "";
-			addLineToChatBox(messageValue);
-			return;
-			
-		} else if (messageKey == "SET_TYPE_OBSERVER") {
-			document.getElementById("startGameButton").style.display = "none";
-			document.getElementById("readyToGameButton").style.display = "none";
-			addLineToChatBox(messageValue);
-			
-			// 서버로 메시지 전송
-			g_webSocket.send("REFRESH_MAP");
-			return;
-		}
-	
-		if (messageKey == "DRAW_MAP") {
-			
-			if (!g_gameStart) {
-				document.getElementById("startGameButton").style.display = "none";
-				document.getElementById("readyToGameButton").style.display = "none";
-				document.getElementById("releaseSelectionButton").style.display = "";
-				g_gameStart = true;
-			} 
-			
-			var nextPipeIndex = messageValue.indexOf("|");
-			if (nextPipeIndex > -1) {
-				var nextTurnNickName = messageValue.substring(0, nextPipeIndex);
-				messageValue = messageValue.substring(nextPipeIndex + 1);
-				
-				addLineToChatBox("***** [" + nextTurnNickName + "]님의 턴입니다. *****");
+		var data = message.data;
+		if (data.indexOf("/+/") > -1) {
+			var dataArray = data.split("/+/");
+			var dataCount = dataArray.length;
+			for (var i=0; i<dataCount; i++) {
+				handleServerMessage(dataArray[i]);
 			}
 			
-			drawMap(messageValue);
-			return;
+		} else {
+			handleServerMessage(data);
 		}
-		
-		alert("기타메시지 : " + messageData);
 	};
 
 
@@ -153,6 +97,98 @@ window.onload = function() {
 	g_webSocket.onerror = function(message) {
 		addLineToChatBox("Error!");
 	};
+}
+
+
+// 서버로부터 도착한 메시지 처리
+function handleServerMessage(_data) {
+	var messageKey = "";
+	var messageValue = "";
+	
+	// var messageData = message.data;
+	var messageData = _data;
+	var pipeIndex = messageData.indexOf("|");
+	if (pipeIndex > -1) {
+		messageKey = messageData.substring(0, pipeIndex);
+		messageValue = messageData.substring(pipeIndex + 1);
+	} else {
+		messageKey = messageData;
+		messageValue = "";
+	}
+	
+	if (messageKey == "CHAT") {
+		addLineToChatBox(messageValue);
+		return;
+	}
+	
+	if (messageKey == "MESSAGE") {
+		alert(messageValue);
+		return;
+	}
+	
+	if (messageKey == "SET_TYPE_CHIEF") {
+		document.getElementById("startGameButton").style.display = "";
+		document.getElementById("readyToGameButton").style.display = "none";
+		addLineToChatBox(messageValue);
+		return;
+		
+	} else if (messageKey == "SET_TYPE_GAMER") {
+		document.getElementById("startGameButton").style.display = "none";
+		document.getElementById("readyToGameButton").style.display = "";
+		addLineToChatBox(messageValue);
+		return;
+		
+	} else if (messageKey == "SET_TYPE_OBSERVER") {
+		document.getElementById("startGameButton").style.display = "none";
+		document.getElementById("readyToGameButton").style.display = "none";
+		addLineToChatBox(messageValue);
+		
+		// 서버로 메시지 전송
+		g_webSocket.send("REFRESH_MAP");
+		return;
+	}
+
+	if (messageKey == "DRAW_MAP") {
+		if (!g_gameStart) {
+			document.getElementById("startGameButton").style.display = "none";
+			document.getElementById("readyToGameButton").style.display = "none";
+			document.getElementById("releaseSelectionButton").style.display = "";
+			g_gameStart = true;
+		} 
+		
+		var nextPipeIndex = messageValue.indexOf("|");
+		if (nextPipeIndex > -1) {
+			var nextTurnNickName = messageValue.substring(0, nextPipeIndex);
+			messageValue = messageValue.substring(nextPipeIndex + 1);
+			
+			addLineToChatBox("***** [" + nextTurnNickName + "]님의 턴입니다. *****");
+		}
+		
+		drawMap(messageValue);
+		return;
+	}
+	
+	if (messageKey == "SET_USERLIST") {
+		if (messageValue == null || messageValue.length == 0) {
+			return;
+		}
+		
+		var userListArea = document.getElementById("userListArea");
+		userListArea.value = "";
+		
+		if (messageValue.indexOf(";") > -1) {
+			var userNameArray = messageValue.split(";");
+			var userCount = userNameArray.length;
+			for (var i=0; i<userCount; i++) {
+				userListArea.value += userNameArray[i] + "\n";		
+			}
+		} else {
+			userListArea.value += messageValue + "\n";
+		}
+		return;
+	}
+	
+	alert("기타메시지 : " + messageData);
 }
 
 
@@ -537,6 +573,15 @@ function scrollDownButton_onclick() {
 	<input id="scrollUpButton" class="basic_button" value="최상단" type="button" onclick="scrollUpButton_onclick()">
 	<input id="scrollDownButton" class="basic_button" value="최하단" type="button" onclick="scrollDownButton_onclick()">
 	<br>
-	<textarea id="chatBoxArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
+	<table style="border: 0px; width: 100%;">
+		<tr>
+			<td style="width: 200px;">
+				<textarea id="userListArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
+			</td>
+			<td>
+				<textarea id="chatBoxArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
+			</td>
+		</tr>
+	</table>
 </body>
 </html>
