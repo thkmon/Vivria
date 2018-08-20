@@ -22,53 +22,38 @@
 		var userNickName = "";
 		var userType = "";
 		
-		
-		var tempCount = 0;
-		
 		if (_roomId == null || _roomId.length == 0) {
 			// 방 제목 결정
-			while (roomName == null || roomName.trim().length == 0) {
-				roomName = window.prompt("방 제목을 입력해주세요.", "");
-				
-				tempCount++;
-				if (tempCount > 3) {
-					alert("더 진행할 수 없습니다.");
-					return false;
-				}
-			}
+			roomName = window.prompt("방 제목을 입력해주세요.", "");
 			
-			tempCount = 0;
-			roomName = roomName.trim();
+			if (roomName == null || roomName.trim().length == 0) {
+				alert("정확하게 입력해주세요.");
+				return false;
+				
+			} else {
+				roomName = roomName.trim();
+			}
 		}
-		
 		
 		// 닉네임 결정
-		while (userNickName == null || userNickName.trim().length == 0) {
-			userNickName = window.prompt("닉네임을 입력해주세요.", "");
+		userNickName = window.prompt("닉네임을 입력해주세요.", "");
+		
+		if (userNickName == null || userNickName.trim().length == 0) {
+			alert("정확하게 입력해주세요.");
+			return false;
 			
-			tempCount++;
-			if (tempCount > 3) {
-				alert("더 진행할 수 없습니다.");
-				return false;
-			}
+		} else {
+			userNickName = userNickName.trim();
 		}
-		
-		tempCount = 0;
-		userNickName = userNickName.trim();
-		
 		
 		// 유저 타입 결정
-		while (userType != "1" && userType != "2") {
-			userType = window.prompt("유저 타입을 입력해주세요. (게이머 == 1, 관전자 == 2)", "");
-			
-			tempCount++;
-			if (tempCount > 3) {
-				alert("더 진행할 수 없습니다.");
-				return false;
-			}
+		userType = window.prompt("유저 타입을 입력해주세요. (게이머 == 1, 관전자 == 2)", "");
+		
+		if (userType != "1" && userType != "2") {
+			alert("정확하게 입력해주세요.");
+			return false;
 		}
 		
-		tempCount = 0;
 		
 		var keyArray = null;
 		var valueArray = null;
@@ -89,18 +74,6 @@
 		if (_param == null || _param.length == 0) {
 			return "";
 		}
-		
-// 		while (_param.indexOf("?") > -1) {
-// 			_param = _param.replace("?", "");
-// 		}
-		
-// 		while (_param.indexOf("=") > -1) {
-// 			_param = _param.replace("=", "");
-// 		}
-		
-// 		while (_param.indexOf("&") > -1) {
-// 			_param = _param.replace("&", "");
-// 		}
 		
 		_param = encodeURIComponent(_param);
 		

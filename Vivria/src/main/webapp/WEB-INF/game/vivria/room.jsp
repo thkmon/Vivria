@@ -5,9 +5,9 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>비브리아</title>
 <script type="text/javascript">
-String.prototype.trim = function() {
-    return this.replace(/(^\s*)|(\s*$)/g, "");
-}
+var g_userNickName = "${userNickName}";
+var g_userType = "${userType}";
+var g_roomId = "${roomId}";
 
 var g_gameStart = false;
 var g_selectMode = false;
@@ -15,31 +15,14 @@ var g_selectedTile = "";
 var g_tileArray = null;
 
 var g_webSocket = null;
+
+
+String.prototype.trim = function() {
+    return this.replace(/(^\s*)|(\s*$)/g, "");
+}
+
+
 window.onload = function() {
-	
-	var userNickName = "";
-	var userType = "";
-	
-// 	var checkNameAndType = false;
-	
-// 	if (checkNameAndType) {
-// 		while (userNickName == null || userNickName.trim().length == 0) {
-// 			userNickName = window.prompt("닉네임을 입력해주세요.", "");
-// 		}
-		
-// 		userNickName = userNickName.trim();
-		
-		
-// 		while (userType != "1" && userType != "2") {
-// 			userType = window.prompt("유저 타입을 입력해주세요. (게이머 == 1, 관전자 == 2)", "");
-// 		}
-		
-// 	} else {
-		userNickName = "${userNickName}";
-		userType = "${userType}";
-		// userNickName = "noname";
-		// userType = "1";
-// 	}
 	
 	g_webSocket = new WebSocket("ws://localhost:8080/websocket");
 	
@@ -48,11 +31,10 @@ window.onload = function() {
 	 * 웹소켓 사용자 연결 성립하는 경우 호출
 	 */
 	g_webSocket.onopen = function(message) {
-		// g_webSocket.send("ROOM_ID|" + "20180817");
-		g_webSocket.send("ROOM_ID|" + "${roomId}");
-		g_webSocket.send("USER_NICK_NAME|" + userNickName);
+		g_webSocket.send("ROOM_ID|" + g_roomId);
+		g_webSocket.send("USER_NICK_NAME|" + g_userNickName);
 		
-		g_webSocket.send("USER_TYPE|" + userType);
+		g_webSocket.send("USER_TYPE|" + g_userType);
 
 		addLineToChatBox("Server is connected.");
 		inputMsgBox.focus();
