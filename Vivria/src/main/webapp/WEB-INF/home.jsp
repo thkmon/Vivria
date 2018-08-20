@@ -4,15 +4,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Home</title>
+	<title>홈페이지</title>
 </head>
 <body>
-<h1>
-	Hello world!  
-</h1>
-
-<P>  The time on the server is ${serverTime}. </P>
-
-${temp}
+	<h1>홈페이지</h1>
+	<a href="/game/vivria/">비브리아 게임</a>
 </body>
 </html>

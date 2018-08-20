@@ -368,7 +368,7 @@ public class GameService implements GameConst {
 	
 
 	// 방 아이디 : 최초접속시 (1)
-	private void handleRoomId(String messageValue, Session session) {
+	private void handleRoomId(String messageValue, Session session) throws MessageException, Exception {
 		String roomId = messageValue;
 		if (roomId == null || roomId.length() == 0) {
 			return;

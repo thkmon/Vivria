@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>웹소켓 테스트 페이지</title>
+<title>비브리아</title>
 <script type="text/javascript">
 String.prototype.trim = function() {
     return this.replace(/(^\s*)|(\s*$)/g, "");
@@ -20,24 +20,26 @@ window.onload = function() {
 	var userNickName = "";
 	var userType = "";
 	
-	var checkNameAndType = false;
+// 	var checkNameAndType = false;
 	
-	if (checkNameAndType) {
-		while (userNickName == null || userNickName.trim().length == 0) {
-			userNickName = window.prompt("닉네임을 입력해주세요.", "");
-		}
+// 	if (checkNameAndType) {
+// 		while (userNickName == null || userNickName.trim().length == 0) {
+// 			userNickName = window.prompt("닉네임을 입력해주세요.", "");
+// 		}
 		
-		userNickName = userNickName.trim();
+// 		userNickName = userNickName.trim();
 		
 		
-		while (userType != "1" && userType != "2") {
-			userType = window.prompt("유저 타입을 입력해주세요. (게이머 == 1, 관전자 == 2)", "");
-		}
+// 		while (userType != "1" && userType != "2") {
+// 			userType = window.prompt("유저 타입을 입력해주세요. (게이머 == 1, 관전자 == 2)", "");
+// 		}
 		
-	} else {
-		userNickName = "noname";
-		userType = "1";
-	}
+// 	} else {
+		userNickName = "${userNickName}";
+		userType = "${userType}";
+		// userNickName = "noname";
+		// userType = "1";
+// 	}
 	
 	g_webSocket = new WebSocket("ws://localhost:8080/websocket");
 	
@@ -46,7 +48,8 @@ window.onload = function() {
 	 * 웹소켓 사용자 연결 성립하는 경우 호출
 	 */
 	g_webSocket.onopen = function(message) {
-		g_webSocket.send("ROOM_ID|" + "20180817");
+		// g_webSocket.send("ROOM_ID|" + "20180817");
+		g_webSocket.send("ROOM_ID|" + "${roomId}");
 		g_webSocket.send("USER_NICK_NAME|" + userNickName);
 		
 		g_webSocket.send("USER_TYPE|" + userType);
@@ -568,7 +571,7 @@ function scrollDownButton_onclick() {
 		%>
 	</div>
 	<br>
-	<input id="inputMsgBox" style="width: 250px;" type="text" onkeypress="inputMsgBox_onkeypress()">
+	<input id="inputMsgBox" style="width: 80%; min-width: 250px;" type="text" onkeypress="inputMsgBox_onkeypress()">
 	<input id="sendButton" class="basic_button" value="전송" type="button" onclick="sendButton_onclick()">
 	<input id="scrollUpButton" class="basic_button" value="최상단" type="button" onclick="scrollUpButton_onclick()">
 	<input id="scrollDownButton" class="basic_button" value="최하단" type="button" onclick="scrollDownButton_onclick()">

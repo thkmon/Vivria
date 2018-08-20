@@ -9,15 +9,39 @@ import com.bb.vivria.util.GameServiceUtil;
 
 public class RoomData implements GameConst {
 	
+	private String roomId = null;
+	private String roomName = null;
 	private UserSessionList userSessionList = null;
 	private TileData[][] tileDataArray = null;
 	private StringList gamerIdList = null;
 	private int gamerTurnIndex = 0;
 	
+	private boolean bClosed = false;
+	
 	// 게임시작되었는지 여부
 	private boolean gameIsStarted = false;
+
 	
-	
+	public String getRoomId() {
+		return roomId;
+	}
+
+
+	public void setRoomId(String roomId) {
+		this.roomId = roomId;
+	}
+
+
+	public String getRoomName() {
+		return roomName;
+	}
+
+
+	public void setRoomName(String roomName) {
+		this.roomName = roomName;
+	}
+
+
 	public RoomData() {
 		userSessionList = new UserSessionList();
 	}
@@ -58,6 +82,16 @@ public class RoomData implements GameConst {
 	}
 	
 	
+	public boolean isbClosed() {
+		return bClosed;
+	}
+
+
+	public void setbClosed(boolean bClosed) {
+		this.bClosed = bClosed;
+	}
+
+
 	/**
 	 * 게임시작
 	 * 

@@ -3,7 +3,9 @@ package com.bb.vivria.util;
 import javax.websocket.Session;
 
 import com.bb.vivria.common.GameConst;
+import com.bb.vivria.data.MessageException;
 import com.bb.vivria.data.RoomData;
+import com.bb.vivria.data.RoomDataList;
 import com.bb.vivria.socket.data.RoomDataMap;
 import com.bb.vivria.socket.data.StringMap;
 import com.bb.vivria.socket.data.UserSession;
@@ -11,11 +13,56 @@ import com.bb.vivria.socket.data.UserSessionList;
 
 public class GameServiceUtil implements GameConst {
 	
+	private static RoomDataList roomDataList = new RoomDataList();
+	
 	private static StringMap sessionIdAndRoomIdMap = new StringMap();
 	private static RoomDataMap roomDataMap = new RoomDataMap();
 	
 	
-	public static UserSession addUserSessionList(String roomId, Session session) {
+	public static RoomDataList getRoomDataList() {
+		return roomDataList;
+	}
+
+
+	private static void setRoomDataList(RoomDataList roomDataList) {
+		GameServiceUtil.roomDataList = roomDataList;
+	}
+
+	
+	public static RoomData makeNewRoom(String roomName) {
+		String roomId = DateUtil.getTodayDateTime();
+		
+		RoomData roomData = new RoomData();
+		roomData.setRoomId(roomId);
+		roomData.setRoomName(roomName);
+		
+		// 방을 생성한다.
+		roomDataMap.put(roomId, roomData);
+		roomDataList.add(roomData);
+		
+		return roomData;
+	}
+	
+	
+	public static RoomData getRoomData(String roomId) {
+		if (roomId == null || roomId.length() == 0) {
+			return null;
+			
+		}
+		
+		RoomData roomData = roomDataMap.get(roomId);
+		if (roomData == null) {
+			return null;
+		}
+		
+		if (roomData.isbClosed()) {
+			return null;
+		}
+		
+		return roomData;
+	}
+
+	public static UserSession addUserSessionList(String roomId, Session session) throws MessageException, Exception {
 		if (session == null) {
 			return null;
 		}
@@ -30,9 +77,9 @@ public class GameServiceUtil implements GameConst {
 			sessionIdAndRoomIdMap.put(sessionId, roomId);
 		}
 		
-		// 기존에 방이 없으면 방을 생성한다.
+		// 기존에 방이 없으면 오류낸다.
 		if (roomDataMap.get(roomId) == null) {
-			roomDataMap.put(roomId, new RoomData());
+			throw new MessageException("존재하지 않는 방입니다.");
 		}
 		
 		UserSession userSession = new UserSession(session);
