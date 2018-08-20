@@ -29,7 +29,7 @@ public class GameServiceUtil implements GameConst {
 	}
 
 	
-	public static RoomData makeNewRoom(String roomName) {
+	public static synchronized RoomData makeNewRoom(String roomName) {
 		String roomId = DateUtil.getTodayDateTime();
 		
 		RoomData roomData = new RoomData();
@@ -62,7 +62,7 @@ public class GameServiceUtil implements GameConst {
 		return roomData;
 	}
 
-	public static UserSession addUserSessionList(String roomId, Session session) throws MessageException, Exception {
+	public static synchronized UserSession addUserSessionList(String roomId, Session session) throws MessageException, Exception {
 		if (session == null) {
 			return null;
 		}

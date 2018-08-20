@@ -141,17 +141,19 @@ function handleServerMessage(_data) {
 			g_gameStart = true;
 		} 
 		
-		var nextPipeIndex = messageValue.indexOf("|");
-		if (nextPipeIndex > -1) {
-			var nextTurnNickName = messageValue.substring(0, nextPipeIndex);
-			messageValue = messageValue.substring(nextPipeIndex + 1);
-			
-			addLineToChatBox("***** [" + nextTurnNickName + "]님의 턴입니다. *****");
-		}
-		
 		drawMap(messageValue);
 		return;
 	}
+	
+	
+	if (messageKey == "SET_TURN") {
+		addLineToChatBox("***** [" + messageValue + "]님의 턴입니다. *****");
+		
+		var turnDiv = document.getElementById("turnDiv");
+		turnDiv.innerText = "[" + messageValue + "]님의 턴";
+		return;
+	}
+	
 	
 	if (messageKey == "SET_USERLIST") {
 		if (messageValue == null || messageValue.length == 0) {
@@ -533,7 +535,11 @@ function scrollDownButton_onclick() {
 	<input id="startGameButton" class="basic_button" value="게임시작" type="button" style="display: none;" onclick="startGameButton_onclick()">
 	<input id="releaseSelectionButton" class="basic_button" value="선택해제" type="button" style="display: none;" onclick="releaseSelectionButton_onclick()">
 	<br>
-	<div style="border: 0px solid #000000; width: 600px; height: 600px; margin: 0 auto;">
+	<br>
+	<div id="turnDiv" style="width: 300px; font-size: 20px;"></div>
+	<br>
+	<br>
+	<div style="border: 0px solid #000000; width: 580px; height: 580px;">
 		<%
 			for (int r=0; r<=10; r++) {
 				for (int c=0; c<=10; c++) {
@@ -553,12 +559,12 @@ function scrollDownButton_onclick() {
 		%>
 	</div>
 	<br>
-	<input id="inputMsgBox" style="width: 80%; min-width: 250px;" type="text" onkeypress="inputMsgBox_onkeypress()">
+	<input id="inputMsgBox" style="width: 410px;" type="text" onkeypress="inputMsgBox_onkeypress()">
 	<input id="sendButton" class="basic_button" value="전송" type="button" onclick="sendButton_onclick()">
 	<input id="scrollUpButton" class="basic_button" value="최상단" type="button" onclick="scrollUpButton_onclick()">
 	<input id="scrollDownButton" class="basic_button" value="최하단" type="button" onclick="scrollDownButton_onclick()">
 	<br>
-	<table style="border: 0px; width: 100%;">
+	<table style="border: 0px; width: 600px;">
 		<tr>
 			<td style="width: 200px;">
 				<textarea id="userListArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>

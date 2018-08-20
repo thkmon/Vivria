@@ -646,7 +646,7 @@ public class GameService implements GameConst {
 			userNickName = userNickName.replace("|", "");
 		}
 		
-		sendMessageToAll(session, "DRAW_MAP|" + userNickName + "|" + mapString);
+		sendMessageToAll(session, "SET_TURN|" + userNickName + "/+/" + "DRAW_MAP|" + mapString);
 	}
 	
 	
@@ -663,7 +663,7 @@ public class GameService implements GameConst {
 			userNickName = userNickName.replace("|", "");
 		}
 		
-		sendMessageToOne(session, "DRAW_MAP|" + userNickName + "|" + mapString);
+		sendMessageToOne(session, "SET_TURN|" + userNickName + "/+/" + "DRAW_MAP|" + mapString);
 	}
 	
 	

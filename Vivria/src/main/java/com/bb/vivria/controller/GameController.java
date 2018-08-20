@@ -16,6 +16,21 @@ import com.bb.vivria.util.GameServiceUtil;
 
 @Controller
 public class GameController {
+	
+	
+	@RequestMapping(value = "/game/vivria", method = {RequestMethod.GET, RequestMethod.POST})
+	public String gameVivria(Locale locale, Model model) {
+		
+		return "game/vivria/room_list";
+	}
+	
+	
+	@RequestMapping(value = "/game/vivria/room", method = RequestMethod.GET)
+	public String gameVivriaRoomByGet(Locale locale, Model model) {
+		return "game/vivria/room_list";
+	}
+	
+	
 	@RequestMapping(value = "/game/vivria/room", method = RequestMethod.POST)
 	public String gameVivriaRoom(HttpServletRequest request, HttpServletResponse response, Locale locale, Model model) {
 
@@ -77,12 +92,4 @@ public class GameController {
 			return "game/vivria/wrong_access";
 		}
 	}
-	
-	
-	@RequestMapping(value = "/game/vivria", method = {RequestMethod.GET, RequestMethod.POST})
-	public String gameVivria(Locale locale, Model model) {
-		
-		return "game/vivria/room_list";
-	}
-	
 }

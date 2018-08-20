@@ -11,17 +11,19 @@
 	// 새로고침
 	function refreshThisPage() {
 // 		location.href = "/game/vivria";
-		doPost("/game/vivria");
+		sendPost("/game/vivria");
 	}
 	
 	
-	// 방 개설
-	function makeNewRoom(_roomId) {
+	// 방 개설 / 방 입장
+	function enterToRoom(_roomId) {
 		
 		var roomName = "";
 		var userNickName = "";
 		var userType = "";
 		
+		// _roomId 값이 존재할 경우 방 입장.
+		// _roomId 값이 존재하지 않을 경우 방 개설.
 		if (_roomId == null || _roomId.length == 0) {
 			// 방 제목 결정
 			roomName = window.prompt("방 제목을 입력해주세요.", "");
@@ -58,6 +60,8 @@
 		var keyArray = null;
 		var valueArray = null;
 		
+		// _roomId 값이 존재할 경우 방 입장.
+		// _roomId 값이 존재하지 않을 경우 방 개설.
 		if (_roomId != null && _roomId.length > 0) {
 			keyArray = ["roomId", "userNickName", "userType"];
 			valueArray = [_roomId, userNickName, userType];
@@ -66,7 +70,7 @@
 			valueArray = [roomName, userNickName, userType];
 		}
 
-		doPost("/game/vivria/room", keyArray, valueArray);
+		sendPost("/game/vivria/room", keyArray, valueArray);
 	}
 	
 	
@@ -81,7 +85,8 @@
 	}
 	
 	
-	function doPost(_url, _keyArray, _valueArray) {
+	// post 방식으로 페이지 이동
+	function sendPost(_url, _keyArray, _valueArray) {
 		try {
 			var formObj = document.getElementById("post_form");
 			if (formObj != null) {
@@ -151,7 +156,7 @@
 <body>
 	<h1>비브리아 대기실</h1>
 	<input type="button" class="basic_button" value="새로고침" onclick="refreshThisPage()">
-	<input type="button" class="basic_button" value="방 개설" onclick="makeNewRoom()">
+	<input type="button" class="basic_button" value="방 개설" onclick="enterToRoom()">
 	<br><br>
 	<div class="roomDiv">
 		<%
@@ -180,7 +185,7 @@
 						continue;
 					}
 					
-					out.print("<h1><span class=\"text_link\" onclick=\"makeNewRoom('" + roomId + "')\">" + roomName + "</span></h1>");
+					out.print("<h1><span class=\"text_link\" onclick=\"enterToRoom('" + roomId + "')\">" + roomName + "</span></h1>");
 				}
 			} else {
 				out.print("현재 개설된 방 없음.");
