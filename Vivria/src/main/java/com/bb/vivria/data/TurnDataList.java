@@ -31,6 +31,11 @@ public class TurnDataList extends ArrayList<TurnData> {
 	}
 	
 	
+	/**
+	 * 접속 해제된 세션에 대해서 턴 객체 제거
+	 * 
+	 * @param sessionIdToRemove
+	 */
 	public void removeTurn(String sessionIdToRemove) {
 		if (this.size() == 0) {
 			return;
@@ -59,5 +64,18 @@ public class TurnDataList extends ArrayList<TurnData> {
 				return;
 			}
 		}
+	}
+	
+	public String doProcessWhenKingIsDead(int kingIndex) {
+		if (kingIndex < 0) {
+			return null;
+		}
+		
+		// 왕이 죽은 게이머의 인덱스를 제거한다.
+		String sessionIdToRemove = this.get(kingIndex).getSessionId();
+		String userNickName = this.get(kingIndex).getUserNickName();
+		removeTurn(sessionIdToRemove);
+		
+		return userNickName;
 	}
 }

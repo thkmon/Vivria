@@ -15,6 +15,9 @@ public class RoomData implements GameConst {
 	private TileData[][] tileDataArray = null;
 	private TurnDataList turnDataList = null;
 	
+	// 패배한 유저 네임을 저장해둔다.
+	private String defeatUserName = null;
+	
 	private boolean bClosed = false;
 	
 	// 게임시작되었는지 여부
@@ -89,6 +92,16 @@ public class RoomData implements GameConst {
 	public void setbClosed(boolean bClosed) {
 		this.bClosed = bClosed;
 	}
+	
+
+	public String getDefeatUserName() {
+		return defeatUserName;
+	}
+
+
+	public void setDefeatUserName(String defeatUserName) {
+		this.defeatUserName = defeatUserName;
+	}
 
 
 	/**
@@ -120,6 +133,16 @@ public class RoomData implements GameConst {
 	}
 	
 	
+	public TurnDataList getTurnDataList() {
+		return turnDataList;
+	}
+
+
+	public void setTurnDataList(TurnDataList turnDataList) {
+		this.turnDataList = turnDataList;
+	}
+
+
 	/**
 	 * 연결 끊기면 턴 조정
 	 * 
@@ -140,6 +163,9 @@ public class RoomData implements GameConst {
 	 * @return
 	 */
 	public String getMapStringForDraw() {
+		if (tileDataArray == null) {
+			return null;
+		}
 		
 		// - 비브리아 있는지 없는지 => 통행불가/통행가능
 		// - 색상
@@ -287,8 +313,16 @@ public class RoomData implements GameConst {
 		int newCount = vivriaCount1 + vivriaCount2;
 		if (newCount > 10) {
 			// (3) 비브리아 크기가 10을 초과하면 배가 터져 죽는다.
+			boolean bKingIsDead = tile2.isKingVivria();
+			
 			removeVivriaUnit(tile1);
 			removeVivriaUnit(tile2);
+			
+			if (bKingIsDead) {
+				int deadKingIndex = gamerIndex2;
+				this.doProcessWhenKingIsDead(deadKingIndex);
+			}
+			
 			return;
 			
 		} else {
@@ -582,7 +616,19 @@ public class RoomData implements GameConst {
 	
 	
 	public String getCurrentTurnUserName() {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return null;
+		}
 		
 		return turnDataList.get(turnDataList.getTurnIndex()).getUserNickName();
+	}
+	
+	
+	public void doProcessWhenKingIsDead(int kingIndex) {
+		
+		String tempDefeatUserName = turnDataList.doProcessWhenKingIsDead(kingIndex);
+		if (tempDefeatUserName != null && tempDefeatUserName.length() > 0) {
+			defeatUserName = tempDefeatUserName;
+		}
 	}
 }

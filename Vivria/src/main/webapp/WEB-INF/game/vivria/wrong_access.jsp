@@ -9,6 +9,6 @@
 <title>Wrong Access</title>
 </head>
 <body>
-	<h1>잘못된 접근입니다.</h1>
+	<h1>잘못된 접근 또는 이미 종료된 게임입니다.</h1>
 </body>
 </html>

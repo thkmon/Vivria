@@ -101,6 +101,44 @@ public class GameServiceUtil implements GameConst {
 	}
 	
 	
+	/**
+	 * 게임방 파괴한다.
+	 * 
+	 * @param session
+	 */
+	public static void destoryGameRoom(Session session) {
+		if (session == null) {
+			return;
+		}
+		
+		String sessionId = session.getId();
+		String roomId = sessionIdAndRoomIdMap.get(sessionId);
+
+		// 방을 파괴한다.
+		sessionIdAndRoomIdMap.put(sessionId, null);
+		roomDataMap.put(roomId, null);
+		
+		if (roomDataList != null) {
+			RoomData roomData = null;
+			
+			int count = roomDataList.size();
+			int lastIndex = count - 1;
+			for (int i=lastIndex; i>=0; i--) {
+				roomData = roomDataList.get(i);
+				
+				if (roomData == null) {
+					continue;
+				}
+				
+				if (roomData.getRoomId() != null && roomData.getRoomId().equals(roomId)) {
+					roomDataList.remove(i);
+					break;
+				}
+			}
+		}
+	}
+	
+	
 	public static UserSession getUserSession(Session session) {
 		if (session == null) {
 			return null;

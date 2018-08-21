@@ -9,6 +9,9 @@ var g_userNickName = "${userNickName}";
 var g_userType = "${userType}";
 var g_roomId = "${roomId}";
 
+var g_defeat = false;
+var g_victory = false;
+
 var g_gameStart = false;
 var g_selectMode = false;
 var g_selectedTile = "";
@@ -175,6 +178,27 @@ function handleServerMessage(_data) {
 		return;
 	}
 	
+	
+	if (messageKey == "DEFEAT") {
+		if (g_userNickName != null && messageValue != null && g_userNickName == messageValue) {
+			g_defeat = true;
+		}
+		
+		addLineToChatBox("***** [" + messageValue + "]님이 게임에서 패배하였습니다. *****");
+		return;
+	}
+	
+	
+	if (messageKey == "VICTORY") {
+		if (g_userNickName != null && messageValue != null && g_userNickName == messageValue) {
+			g_victory = true;
+		}
+		
+		addLineToChatBox("***** [" + messageValue + "]님이 게임에서 승리하였습니다. *****");
+		return;
+	}
+	
+	
 	alert("기타메시지 : " + messageData);
 }
 
@@ -271,7 +295,13 @@ function drawMap(_messageData) {
 			elem2 = document.getElementById("tile_span" + r + "_" + c);
 			
 			if (singleTile == "XXX") {
-				elem.style.backgroundImage = "url('/resources/img/vivria/xtile.png')";
+				if (g_victory == true) {
+					elem.style.backgroundImage = "url('/resources/img/vivria/victory.png')";
+				} else if (g_defeat == true) {
+					elem.style.backgroundImage = "url('/resources/img/vivria/defeat.png')";
+				} else {
+					elem.style.backgroundImage = "url('/resources/img/vivria/xtile.png')";
+				}
 				elem2.innerText = "";
 				
 			} else if (singleTile == "OOO") {

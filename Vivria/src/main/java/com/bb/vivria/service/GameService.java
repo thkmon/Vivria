@@ -5,6 +5,7 @@ import javax.websocket.Session;
 import com.bb.vivria.common.GameConst;
 import com.bb.vivria.data.MessageException;
 import com.bb.vivria.data.RoomData;
+import com.bb.vivria.data.TurnDataList;
 import com.bb.vivria.socket.data.UserSession;
 import com.bb.vivria.socket.data.UserSessionList;
 import com.bb.vivria.util.GameServiceUtil;
@@ -37,12 +38,25 @@ public class GameService implements GameConst {
 		String sessionId = session.getId();
 		System.out.println("client is disconnected. sessionId == [" + sessionId + "]");
 		
+		// 사람 없으면 방 제거
+		int gamerCount = this.getCountOfUserTypeGamer(session);
+		if (gamerCount == 0) {
+			GameServiceUtil.destoryGameRoom(session);
+		}
+		
 		// 연결 끊기면 턴 조정
 		RoomData roomData = GameServiceUtil.getRoomData(session);
+		if (roomData == null) {
+			return;
+		}
+		
 		roomData.removeSessionOfTurn(sessionId);
 		
 		// 현재턴 게이머 이름
 		String thisTurnUserName = roomData.getCurrentTurnUserName();
+		if (thisTurnUserName == null || thisTurnUserName.length() == 0) {
+			return;
+		}
 						
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
@@ -59,6 +73,7 @@ public class GameService implements GameConst {
 		msg += "/+/" + "SET_USERLIST|" + userListString;
 		
 		sendMessageToAll(session, msg);
+		
 		return;
 	}
 	
@@ -155,7 +170,12 @@ public class GameService implements GameConst {
 	
 	
 	/**
-	 * 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
+	 * 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송 (2)
+	 * 
+	 * @param session
+	 * @param message
+	 * @param messageToSingleSession
+	 * @return
 	 */
 	private boolean sendMessageToAll(Session session, String message, String messageToSingleSession) {
 		
@@ -195,6 +215,13 @@ public class GameService implements GameConst {
 	}
 	
 	
+	/**
+	 * 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송 (1)
+	 * 
+	 * @param singleSession
+	 * @param message
+	 * @return
+	 */
 	public boolean sendMessageToOne(Session singleSession, String message) {
 		
 		if (singleSession == null) {
@@ -551,7 +578,12 @@ public class GameService implements GameConst {
 		roomData.startNewGame(session);
 		
 		// 클라이언트 화면에 맵 그리기
-		drawMap(session, false);
+		String messageForMap = drawMap(session, false);
+		if (messageForMap == null || messageForMap.length() == 0) {
+			return;
+		}
+		
+		sendMessageToAll(session, messageForMap);
 		
 		throw new MessageException("게임 시작!");
 	}
@@ -630,8 +662,28 @@ public class GameService implements GameConst {
 		boolean bMoved = moveUnit(session, messageValue);
 		
 		if (bMoved) {
+			roomData = GameServiceUtil.getRoomData(session);
+			
+			// 패배했을 경우 꺼내자마자 초기화
+			String defeatUserName = roomData.getDefeatUserName();
+			roomData.setDefeatUserName(null);
+			
 			// 클라이언트 화면에 맵 그리기
-			drawMap(session, true);
+			String messageForMap = drawMap(session, true);
+			if (messageForMap == null || messageForMap.length() == 0) {
+				return;
+			}
+			
+			if (defeatUserName != null && defeatUserName.length() > 0) {
+				messageForMap = "DEFEAT|" + defeatUserName + "/+/" + messageForMap;
+				
+				TurnDataList turnDataList = roomData.getTurnDataList();
+				if (turnDataList != null && turnDataList.size() == 1) {
+					messageForMap = "VICTORY|" + turnDataList.get(0).getUserNickName() + "/+/" + messageForMap;
+				}
+			}
+			
+			sendMessageToAll(session, messageForMap);
 		}
 	}
 	
@@ -641,10 +693,13 @@ public class GameService implements GameConst {
 	 * 
 	 * @param session
 	 */
-	public void drawMap(Session session, boolean changeToNextTurn) {
+	public String drawMap(Session session, boolean changeToNextTurn) {
 		
 		RoomData roomData = GameServiceUtil.getRoomData(session);
 		String mapString = roomData.getMapStringForDraw();
+		if (mapString == null || mapString.length() == 0) {
+			return null;
+		}
 		
 		if (changeToNextTurn) {
 			// 다음턴 지정
@@ -653,18 +708,12 @@ public class GameService implements GameConst {
 		
 		// 현재턴 게이머 이름
 		String thisTurnUserName = roomData.getCurrentTurnUserName();
-		sendMessageToAll(session, "SET_TURN|" + thisTurnUserName + "/+/" + "DRAW_MAP|" + mapString);
-	}
-	
-	
-	public void drawMapToOne(Session session) {
+		if (thisTurnUserName == null || thisTurnUserName.length() == 0) {
+			return null;
+		}
 		
-		RoomData roomData = GameServiceUtil.getRoomData(session);
-		String mapString = roomData.getMapStringForDraw();
-		
-		// 현재턴 게이머 이름
-		String thisTurnUserName = roomData.getCurrentTurnUserName();
-		sendMessageToOne(session, "SET_TURN|" + thisTurnUserName + "/+/" + "DRAW_MAP|" + mapString);
+		String messageForMap = "SET_TURN|" + thisTurnUserName + "/+/" + "DRAW_MAP|" + mapString;
+		return messageForMap;
 	}
 	
 	
@@ -692,6 +741,7 @@ public class GameService implements GameConst {
 		
 		try {
 			roomData.moveUnit(col1, row1, col2, row2);
+			
 			bResult = true;
 			
 		} catch (MessageException e) {
@@ -707,6 +757,13 @@ public class GameService implements GameConst {
 	}
 	
 	
+	/**
+	 * 맵 새로고침
+	 * 
+	 * @param session
+	 * @throws MessageException
+	 * @throws Exception
+	 */
 	private void handleRefreshMap(Session session) throws MessageException, Exception {
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
@@ -719,6 +776,11 @@ public class GameService implements GameConst {
 		}
 		
 		// 클라이언트 화면에 맵 그리기
-		drawMapToOne(session);
+		String messageForMap = drawMap(session, false);
+		if (messageForMap == null || messageForMap.length() == 0) {
+			return;
+		}
+		
+		sendMessageToOne(session, messageForMap);
 	}
 }
