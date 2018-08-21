@@ -25,10 +25,38 @@ String.prototype.trim = function() {
 }
 
 
+// 뒤로 가기 방지
+function forbidBackCommand() {
+	history.pushState(null, null, location.href);
+	window.onpopstate = function(event) {	
+		history.go(1);
+	}
+}
+
+
+// 마우스 우클릭 이벤트 변경 (마우스 우클릭시 선택해제 실행)
+function replaceMouseRightEvent() {
+	document.body.oncontextmenu = function() {
+		// 마우스 우클릭시 선택해제 실행
+		releaseSelection();
+		return false;
+	}
+}
+
+
 window.onload = function() {
 	
-	g_webSocket = new WebSocket("ws://localhost:8080/websocket");
+	if (location != null && location.href != null && location.href.indexOf("localhost") > -1) {
+		g_webSocket = new WebSocket("ws://localhost:8080/websocket");
+	} else {
+		g_webSocket = new WebSocket("ws://ddoc.kr:18080/websocket");
+	}
+
+	// 뒤로 가기 방지
+	forbidBackCommand();
 	
+	// 마우스 우클릭 이벤트 변경 (마우스 우클릭시 선택해제 실행)
+	replaceMouseRightEvent();
 	
 	/**
 	 * 웹소켓 사용자 연결 성립하는 경우 호출
@@ -577,8 +605,8 @@ function scrollDownButton_onclick() {
 						out.print("<div>");
 					}
 					
-					String tileCoverDiv = "<span id=\"tile_span" + r + "_" + c + "\" style=\"position: fixed;\"></span>" +
-										  "<div id=\"tile_cover" + r + "_" + c + "\" class=\"tile_cover lfloat\" style=\"display: none; position: fixed;\"></div>";
+					String tileCoverDiv = "<span id=\"tile_span" + r + "_" + c + "\" style=\"position: absolute;\"></span>" +
+										  "<div id=\"tile_cover" + r + "_" + c + "\" class=\"tile_cover lfloat\" style=\"display: none;\"></div>";
 					out.print("<div id=\"tile" + r + "_" + c + "\" class=\"tile lfloat\" onclick=\"tile_onclick(" + r + "," + c + ")\">" + tileCoverDiv + "</div>");
 					
 					if (c == 10) {
