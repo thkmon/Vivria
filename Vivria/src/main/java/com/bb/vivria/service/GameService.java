@@ -587,11 +587,13 @@ public class GameService implements GameConst {
 		// 게임 준비 상태로 설정. 이미 준비 상태일 경우 준비 해제한다.
 		if (!userSession.isReadyToGame()) {
 			userSession.setReadyToGame(true);
-			throw new MessageException("준비 상태로 설정하였습니다.");
+			
+			String commonMsg = "CHAT|***** [" + userSession.getUserNickName() + "] 님이 준비 상태로 설정하였습니다. *****";
+			
+			sendMessageToAll(session, commonMsg, commonMsg + "/+/" + "MESSAGE|" + "준비 상태로 설정하였습니다.");
+			
 		} else {
 			throw new MessageException("이미 준비 상태로 설정하였습니다.");
-//			userSession.setReadyToGame(false);
-//			throw new MessageException("준비 상태를 해제하였습니다.");
 		}
 	}
 	
