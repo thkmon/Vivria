@@ -5,6 +5,9 @@ public class TurnData {
 	private String sessionId = null;
 	private String userNickName = null;
 	
+	// 턴 객체 만료여부
+	private boolean bIsOver = false;
+	
 	
 	public String getSessionId() {
 		return sessionId;
@@ -23,5 +26,15 @@ public class TurnData {
 
 	public void setUserNickName(String userNickName) {
 		this.userNickName = userNickName;
+	}
+
+
+	public boolean isbIsOver() {
+		return bIsOver;
+	}
+
+
+	public void setbIsOver(boolean bIsOver) {
+		this.bIsOver = bIsOver;
 	}
 }

@@ -585,53 +585,73 @@ function scrollDownButton_onclick() {
 	
 	.basic_button {
 		cursor: pointer;
+		height: 32px;
+	}
+	
+	.turnDiv {
+/* 		border: 1px solid #000000; */
 	}
 </style>
 </head>
 <body>
-	<!-- <input id="disconnectButton" class="basic_button" value="연결끊기" type="button" onclick="disconnectButton_onclick()"> -->
-	<input id="readyToGameButton" class="basic_button" value="게임준비" type="button" style="display: none;" onclick="readyToGameButton_onclick()">
-	<input id="startGameButton" class="basic_button" value="게임시작" type="button" style="display: none;" onclick="startGameButton_onclick()">
-	<input id="releaseSelectionButton" class="basic_button" value="선택해제" type="button" style="display: none;" onclick="releaseSelectionButton_onclick()">
-	<br>
-	<br>
-	<div id="turnDiv" style="width: 300px; font-size: 20px;"></div>
-	<br>
-	<br>
-	<div style="border: 0px solid #000000; width: 580px; height: 580px;">
-		<%
-			for (int r=0; r<=10; r++) {
-				for (int c=0; c<=10; c++) {
-					if (c == 0) {
-						out.print("<div>");
-					}
-					
-					String tileCoverDiv = "<span id=\"tile_span" + r + "_" + c + "\" style=\"position: absolute;\"></span>" +
-										  "<div id=\"tile_cover" + r + "_" + c + "\" class=\"tile_cover lfloat\" style=\"display: none;\"></div>";
-					out.print("<div id=\"tile" + r + "_" + c + "\" class=\"tile lfloat\" onclick=\"tile_onclick(" + r + "," + c + ")\">" + tileCoverDiv + "</div>");
-					
-					if (c == 10) {
-						out.print("</div>");
-					}
-				}
-			}
-		%>
-	</div>
-	<br>
-	<input id="inputMsgBox" style="width: 410px;" type="text" onkeypress="inputMsgBox_onkeypress()">
-	<input id="sendButton" class="basic_button" value="전송" type="button" onclick="sendButton_onclick()">
-	<input id="scrollUpButton" class="basic_button" value="최상단" type="button" onclick="scrollUpButton_onclick()">
-	<input id="scrollDownButton" class="basic_button" value="최하단" type="button" onclick="scrollDownButton_onclick()">
-	<br>
-	<table style="border: 0px; width: 600px;">
+	<table style="border: 0px solid #000000; width: 100%; max-width: 1024px; min-width: 600px;">
 		<tr>
-			<td style="width: 200px;">
-				<textarea id="userListArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
-			</td>
-			<td>
-				<textarea id="chatBoxArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
+			<td style="width: 100%;">
+				<!-- <input id="disconnectButton" class="basic_button" value="연결끊기" type="button" onclick="disconnectButton_onclick()"> -->
+				<input id="readyToGameButton" class="basic_button" value="게임준비" type="button" style="display: none;" onclick="readyToGameButton_onclick()">
+				<input id="startGameButton" class="basic_button" value="게임시작" type="button" style="display: none;" onclick="startGameButton_onclick()">
+				<input id="releaseSelectionButton" class="basic_button" value="선택해제" type="button" style="display: none;" onclick="releaseSelectionButton_onclick()">
+				<br>
+				<br>
+				<div id="turnDiv" class="turnDiv" style="width: 300px; font-size: 20px;"></div>
+				<br>
+				<br>
+				<div style="border: 0px solid #000000; width: 580px; height: 580px; margin: 0 auto;">
+					<%
+						for (int r=0; r<=10; r++) {
+							for (int c=0; c<=10; c++) {
+								if (c == 0) {
+									out.print("<div>");
+								}
+								
+								String tileCoverDiv = "<span id=\"tile_span" + r + "_" + c + "\" style=\"position: absolute;\"></span>" +
+													  "<div id=\"tile_cover" + r + "_" + c + "\" class=\"tile_cover lfloat\" style=\"display: none;\"></div>";
+								out.print("<div id=\"tile" + r + "_" + c + "\" class=\"tile lfloat\" onclick=\"tile_onclick(" + r + "," + c + ")\">" + tileCoverDiv + "</div>");
+								
+								if (c == 10) {
+									out.print("</div>");
+								}
+							}
+						}
+					%>
+				</div>
+				<br>
+				<table style="border: 0px solid #000000; width: 100%; max-width: 1024px; min-width: 600px;">
+					<tr>
+						<td>
+							<input id="inputMsgBox" style="width: 100%; height: 28px;" type="text" onkeypress="inputMsgBox_onkeypress()">
+						</td>
+						<td style="width: 200px; text-align: right;">
+							<input id="sendButton" class="basic_button" value="전송" type="button" onclick="sendButton_onclick()">
+							&nbsp;
+							<input id="scrollUpButton" class="basic_button" value="최상단" type="button" onclick="scrollUpButton_onclick()">
+							<input id="scrollDownButton" class="basic_button" value="최하단" type="button" onclick="scrollDownButton_onclick()">
+						</td>
+					</tr>
+				</table>
+				<table style="border: 0px solid #000000; width: 100%; max-width: 1024px; min-width: 600px;">
+					<tr>
+						<td style="width: 200px;">
+							<textarea id="userListArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
+						</td>
+						<td>
+							<textarea id="chatBoxArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
+						</td>
+					</tr>
+				</table>
 			</td>
 		</tr>
 	</table>
+	<br>
 </body>
 </html>

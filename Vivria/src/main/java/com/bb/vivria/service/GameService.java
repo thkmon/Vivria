@@ -677,9 +677,9 @@ public class GameService implements GameConst {
 			if (defeatUserName != null && defeatUserName.length() > 0) {
 				messageForMap = "DEFEAT|" + defeatUserName + "/+/" + messageForMap;
 				
-				TurnDataList turnDataList = roomData.getTurnDataList();
-				if (turnDataList != null && turnDataList.size() == 1) {
-					messageForMap = "VICTORY|" + turnDataList.get(0).getUserNickName() + "/+/" + messageForMap;
+				String victoryUserName = roomData.getVictoryUserName();
+				if (victoryUserName != null && victoryUserName.length() > 0) {
+					messageForMap = "VICTORY|" + victoryUserName + "/+/" + messageForMap;
 				}
 			}
 			
@@ -693,7 +693,7 @@ public class GameService implements GameConst {
 	 * 
 	 * @param session
 	 */
-	public String drawMap(Session session, boolean changeToNextTurn) {
+	public String drawMap(Session session, boolean changeToNextTurn) throws MessageException, Exception {
 		
 		RoomData roomData = GameServiceUtil.getRoomData(session);
 		String mapString = roomData.getMapStringForDraw();
@@ -703,7 +703,7 @@ public class GameService implements GameConst {
 		
 		if (changeToNextTurn) {
 			// 다음턴 지정
-			roomData.getNextTurnIndex();
+			roomData.setNextTurn();
 		}
 		
 		// 현재턴 게이머 이름

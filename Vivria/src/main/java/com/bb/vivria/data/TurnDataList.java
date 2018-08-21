@@ -6,75 +6,165 @@ public class TurnDataList extends ArrayList<TurnData> {
 	
 	private int turnIndex = 0;
 
-	public int getTurnIndex() {
-		return turnIndex;
+	
+	public int getCurrentTurnIndex() {
+		int count = this.size();
+		if (count == 0) {
+			return -1;
+		}
+		
+		int lastIndex = count - 1;
+		
+		// 1. 리스트에서 턴 인덱스부터 찾기
+		for (int i=turnIndex; i<=lastIndex; i++) {
+			if (this.get(i) == null) {
+				continue;
+			}
+			
+			if (this.get(i).isbIsOver()) {
+				continue;
+			}
+			
+			// 턴 인덱스 반영
+			turnIndex = i;
+			return turnIndex;
+		}
+		
+		// 2. 리스트에서 0부터 턴 인덱스 포함 전까지 찾기
+		for (int i=0; i<turnIndex; i++) {
+			if (this.get(i) == null) {
+				continue;
+			}
+			
+			if (this.get(i).isbIsOver()) {
+				continue;
+			}
+			
+			turnIndex = i;
+			return turnIndex;
+		}
+		
+		return -1;
 	}
 
-	private void setTurnIndex(int turnIndex) {
-		this.turnIndex = turnIndex;
+	
+	public int getNextTurnIndex() throws MessageException, Exception {
+		
+		int count = this.size();
+		if (count == 0) {
+			return -1;
+		}
+		
+		int lastIndex = count - 1;
+		
+		// 1. 리스트에서 턴 인덱스 1칸 다음부터 찾기
+		for (int i=(turnIndex + 1); i<=lastIndex; i++) {
+			if (this.get(i) == null) {
+				continue;
+			}
+			
+			if (this.get(i).isbIsOver()) {
+				continue;
+			}
+			
+			// 턴 인덱스 반영
+			turnIndex = i;
+			return turnIndex;
+		}
+		
+		// 2. 리스트에서 0부터 턴 인덱스 포함까지 찾기
+		for (int i=0; i<=turnIndex; i++) {
+			if (this.get(i) == null) {
+				continue;
+			}
+			
+			if (this.get(i).isbIsOver()) {
+				continue;
+			}
+			
+			turnIndex = i;
+			return turnIndex;
+		}
+		
+		return -1;
 	}
 	
 	
-	public int getNextTurnIndex() {
-		turnIndex++;
+	public String getVictoryUserName() throws MessageException, Exception {
 		
-		if (turnIndex < 0) {
-			turnIndex = 0;
+		int count = this.size();
+		if (count == 0) {
+			return null;
 		}
 		
-		int lastIndex = this.size() - 1;
-		if (turnIndex > lastIndex) {
-			turnIndex = 0;
+		String validUserName = null;
+		int validUserCount = 0;
+		
+		TurnData turnData = null;
+		for (int i=0; i<count; i++) {
+			turnData = this.get(i);
+			if (turnData == null) {
+				continue;
+			}
+			
+			if (turnData.isbIsOver()) {
+				continue;
+			}
+			
+			if (turnData.getUserNickName() != null && turnData.getUserNickName().length() > 0) {
+				validUserName = turnData.getUserNickName();
+				validUserCount++;
+			}
 		}
 		
-		return turnIndex;
+		if (validUserCount == 1) {
+			return validUserName;
+		}
+		
+		return null;
 	}
 	
 	
 	/**
-	 * 접속 해제된 세션에 대해서 턴 객체 제거
+	 * 접속 해제된 세션에 대해서 턴 객체 만료시킨다.
 	 * 
-	 * @param sessionIdToRemove
+	 * @param turnOverSessionId
 	 */
-	public void removeTurn(String sessionIdToRemove) {
+	public void setTurnIsOver(String turnOverSessionId) {
 		if (this.size() == 0) {
 			return;
 		}
 		
-		if (sessionIdToRemove == null || sessionIdToRemove.length() == 0) {
+		if (turnOverSessionId == null || turnOverSessionId.length() == 0) {
 			return;
 		}
 		
 		TurnData turnData = null;
 		int count = this.size();
-		int lastIndex = count - 1;
-		for (int i=lastIndex; i>=0; i--) {
+		for (int i=0; i<count; i++) {
 			turnData = this.get(i);
 			if (turnData == null) {
 				continue;
 			}
 			
 			String singleSessionId = turnData.getSessionId();
-			if (singleSessionId != null && singleSessionId.equals(sessionIdToRemove)) {
-				this.remove(i);
-				
-				// 현재 턴 지웠으면 턴 증가
-				getNextTurnIndex();
-				
-				return;
+			if (singleSessionId != null && singleSessionId.equals(turnOverSessionId)) {
+				this.get(i).setbIsOver(true);
+				break;
 			}
 		}
 	}
+	
 	
 	public String doProcessWhenKingIsDead(int kingIndex) {
 		if (kingIndex < 0) {
 			return null;
 		}
 		
-		// 왕이 죽은 게이머의 인덱스를 제거한다.
+		// 왕이 죽은 게이머의 턴을 만료시킨다.
 		String sessionIdToRemove = this.get(kingIndex).getSessionId();
 		String userNickName = this.get(kingIndex).getUserNickName();
-		removeTurn(sessionIdToRemove);
+		setTurnIsOver(sessionIdToRemove);
 		
 		return userNickName;
 	}

@@ -136,6 +136,7 @@
 	
 	.basic_button {
 		cursor: pointer;
+		height: 32px;
 	}
 	
 	

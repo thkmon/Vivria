@@ -128,12 +128,12 @@ public class RoomData implements GameConst {
 	 * 
 	 * @return
 	 */
-	public int getNextTurnIndex() {
-		return turnDataList.getNextTurnIndex();
+	public void setNextTurn() throws MessageException, Exception {
+		turnDataList.getNextTurnIndex();
 	}
 	
 	
-	public TurnDataList getTurnDataList() {
+	private TurnDataList getTurnDataList() {
 		return turnDataList;
 	}
 
@@ -153,7 +153,7 @@ public class RoomData implements GameConst {
 			return;
 		}
 		
-		turnDataList.removeTurn(sessionIdToRemove);
+		turnDataList.setTurnIsOver(sessionIdToRemove);
 	}
 	
 	
@@ -213,7 +213,7 @@ public class RoomData implements GameConst {
 			throw new MessageException("이동할 수 없는 타일입니다.");
 		}
 		
-		if (tile1.getGamerIndex() != turnDataList.getTurnIndex()) {
+		if (tile1.getGamerIndex() != turnDataList.getCurrentTurnIndex()) {
 			throw new MessageException("남의 캐릭터는 제어할 수 없습니다.");
 		}
 		
@@ -603,9 +603,17 @@ public class RoomData implements GameConst {
 	
 	
 	
-	public boolean checkSessionIsTurnNow(Session session) {
+	public boolean checkSessionIsTurnNow(Session session) throws MessageException, Exception {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return false;
+		}
 		
-		String gamerId = turnDataList.get(turnDataList.getTurnIndex()).getSessionId();
+		int currentTurnIndex = turnDataList.getCurrentTurnIndex();
+		if (currentTurnIndex < 0) {
+			return false;
+		}
+		
+		String gamerId = turnDataList.get(currentTurnIndex).getSessionId();
 		
 		if (gamerId.equals(session.getId())) {
 			return true;
@@ -620,15 +628,32 @@ public class RoomData implements GameConst {
 			return null;
 		}
 		
-		return turnDataList.get(turnDataList.getTurnIndex()).getUserNickName();
+		int currentTurnIndex = turnDataList.getCurrentTurnIndex();
+		if (currentTurnIndex < 0) {
+			return null;
+		}
+		
+		return turnDataList.get(currentTurnIndex).getUserNickName();
 	}
 	
 	
 	public void doProcessWhenKingIsDead(int kingIndex) {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return;
+		}
 		
 		String tempDefeatUserName = turnDataList.doProcessWhenKingIsDead(kingIndex);
 		if (tempDefeatUserName != null && tempDefeatUserName.length() > 0) {
 			defeatUserName = tempDefeatUserName;
 		}
+	}
+	
+	
+	public String getVictoryUserName() throws MessageException, Exception {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return null;
+		}
+		
+		return turnDataList.getVictoryUserName();
 	}
 }

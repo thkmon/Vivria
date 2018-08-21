@@ -174,7 +174,7 @@ public class GameServiceUtil implements GameConst {
 	}
 	
 	
-	public static boolean checkSessionIsTurnNow(Session session) {
+	public static boolean checkSessionIsTurnNow(Session session) throws MessageException, Exception {
 		if (session == null) {
 			return false;
 		}
@@ -196,5 +196,4 @@ public class GameServiceUtil implements GameConst {
 		String userListString = roomData.getUserListString(session);
 		return userListString;
 	}
-	
 }
