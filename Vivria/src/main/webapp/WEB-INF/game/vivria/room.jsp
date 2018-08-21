@@ -34,10 +34,10 @@ function forbidBackCommand() {
 }
 
 
-// 마우스 우클릭 이벤트 변경 (마우스 우클릭시 선택해제 실행)
+// 마우스 우클릭 이벤트 변경 (마우스 우클릭시 타일의 선택해제 실행)
 function replaceMouseRightEvent() {
 	document.body.oncontextmenu = function() {
-		// 마우스 우클릭시 선택해제 실행
+		// 마우스 우클릭시 타일의 선택해제 실행
 		releaseSelection();
 		return false;
 	}
@@ -55,7 +55,7 @@ window.onload = function() {
 	// 뒤로 가기 방지
 	forbidBackCommand();
 	
-	// 마우스 우클릭 이벤트 변경 (마우스 우클릭시 선택해제 실행)
+	// 마우스 우클릭 이벤트 변경 (마우스 우클릭시 타일의 선택해제 실행)
 	replaceMouseRightEvent();
 	
 	/**
@@ -514,12 +514,13 @@ function getTileIndex(_row, _col) {
 }
 
 
-// 선택해제
+// 선택해제 버튼 클릭시
 function releaseSelectionButton_onclick() {
 	releaseSelection();
 }
 
 
+// 타일의 선택해제
 function releaseSelection() {
 	var elem = null;
 	var elem2 = null;
