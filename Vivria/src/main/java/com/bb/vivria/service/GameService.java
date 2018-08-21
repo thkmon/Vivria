@@ -37,16 +37,26 @@ public class GameService implements GameConst {
 		String sessionId = session.getId();
 		System.out.println("client is disconnected. sessionId == [" + sessionId + "]");
 		
+		// 연결 끊기면 턴 조정
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		roomData.removeSessionOfTurn(sessionId);
+		
+		// 현재턴 게이머 이름
+		String thisTurnUserName = roomData.getCurrentTurnUserName();
+						
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
 			return;
 		}
 		
 		// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
-		String msg = "CHAT|***** [" + userSession.getUserNickName() + "] 님의 접속이 해제되었습니다. *****";
+		String msg = "";
+		
+		msg += "SET_TURN|" + thisTurnUserName;
+		msg += "/+/" + "CHAT|***** [" + userSession.getUserNickName() + "] 님의 접속이 해제되었습니다. *****";
 		
 		String userListString = GameServiceUtil.getUserListString(session);
-		msg = msg + "/+/" + "SET_USERLIST|" + userListString;
+		msg += "/+/" + "SET_USERLIST|" + userListString;
 		
 		sendMessageToAll(session, msg);
 		return;
@@ -541,7 +551,7 @@ public class GameService implements GameConst {
 		roomData.startNewGame(session);
 		
 		// 클라이언트 화면에 맵 그리기
-		drawMap(session, true);
+		drawMap(session, false);
 		
 		throw new MessageException("게임 시작!");
 	}
@@ -634,19 +644,14 @@ public class GameService implements GameConst {
 		RoomData roomData = GameServiceUtil.getRoomData(session);
 		String mapString = roomData.getMapStringForDraw();
 		
-		String userNickName = "";
 		if (changeToNextTurn) {
 			// 다음턴 지정
 			roomData.getNextTurnIndex();
 		}
 		
-		UserSession userSession = GameServiceUtil.getUserSession(session);
-		userNickName = userSession.getUserNickName();
-		if (userNickName.indexOf("|") > -1) {
-			userNickName = userNickName.replace("|", "");
-		}
-		
-		sendMessageToAll(session, "SET_TURN|" + userNickName + "/+/" + "DRAW_MAP|" + mapString);
+		// 현재턴 게이머 이름
+		String thisTurnUserName = roomData.getCurrentTurnUserName();
+		sendMessageToAll(session, "SET_TURN|" + thisTurnUserName + "/+/" + "DRAW_MAP|" + mapString);
 	}
 	
 	
@@ -655,15 +660,9 @@ public class GameService implements GameConst {
 		RoomData roomData = GameServiceUtil.getRoomData(session);
 		String mapString = roomData.getMapStringForDraw();
 		
-		// 현재턴 참가자 닉네임
-		String userNickName = "";
-		UserSession userSession = GameServiceUtil.getUserSession(session);
-		userNickName = userSession.getUserNickName();
-		if (userNickName.indexOf("|") > -1) {
-			userNickName = userNickName.replace("|", "");
-		}
-		
-		sendMessageToOne(session, "SET_TURN|" + userNickName + "/+/" + "DRAW_MAP|" + mapString);
+		// 현재턴 게이머 이름
+		String thisTurnUserName = roomData.getCurrentTurnUserName();
+		sendMessageToOne(session, "SET_TURN|" + thisTurnUserName + "/+/" + "DRAW_MAP|" + mapString);
 	}
 	
 	

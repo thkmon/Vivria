@@ -13,8 +13,7 @@ public class RoomData implements GameConst {
 	private String roomName = null;
 	private UserSessionList userSessionList = null;
 	private TileData[][] tileDataArray = null;
-	private StringList gamerIdList = null;
-	private int gamerTurnIndex = 0;
+	private TurnDataList turnDataList = null;
 	
 	private boolean bClosed = false;
 	
@@ -100,12 +99,10 @@ public class RoomData implements GameConst {
 	public void startNewGame(Session session) {
 
 		// 게이머 리스트 구한다.
-		gamerIdList = createGamerIdList(session);
-		
-		gamerTurnIndex = -1;
+		turnDataList = createGamerIdList(session);
 		
 		// 새 타일 데이터(맵)을 생성한다.
-		int gamerCount = gamerIdList.size();
+		int gamerCount = turnDataList.size();
 		tileDataArray = createTileData(gamerCount);
 		
 		// 게임시작
@@ -119,19 +116,21 @@ public class RoomData implements GameConst {
 	 * @return
 	 */
 	public int getNextTurnIndex() {
-		
-		gamerTurnIndex++;
-		
-		if (gamerTurnIndex < 0) {
-			gamerTurnIndex = 0;
+		return turnDataList.getNextTurnIndex();
+	}
+	
+	
+	/**
+	 * 연결 끊기면 턴 조정
+	 * 
+	 * @param sessionIdToRemove
+	 */
+	public void removeSessionOfTurn(String sessionIdToRemove) {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return;
 		}
 		
-		int lastIndex = gamerIdList.size() - 1;
-		if (gamerTurnIndex > lastIndex) {
-			gamerTurnIndex = 0;
-		}
-		
-		return gamerTurnIndex;
+		turnDataList.removeTurn(sessionIdToRemove);
 	}
 	
 	
@@ -188,7 +187,7 @@ public class RoomData implements GameConst {
 			throw new MessageException("이동할 수 없는 타일입니다.");
 		}
 		
-		if (tile1.getGamerIndex() != gamerTurnIndex) {
+		if (tile1.getGamerIndex() != turnDataList.getTurnIndex()) {
 			throw new MessageException("남의 캐릭터는 제어할 수 없습니다.");
 		}
 		
@@ -468,7 +467,7 @@ public class RoomData implements GameConst {
 	 * @param session
 	 * @return
 	 */
-	private StringList createGamerIdList(Session session) {
+	private TurnDataList createGamerIdList(Session session) {
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
 		if (userSessionList == null) {
@@ -480,8 +479,9 @@ public class RoomData implements GameConst {
 			return null;
 		}
 
-		StringList resultList = new StringList();
+		TurnDataList resultList = new TurnDataList();
 		
+		UserSession singleUserSession = null;
 		Session singleSession = null;
 
 		for (int i = 0; i < sessionCount; i++) {
@@ -494,18 +494,20 @@ public class RoomData implements GameConst {
 				continue;
 			}
 
-			if (userSessionList.get(i).isRoomChief()) {
-				String singleSessionId = singleSession.getId();
-				if (singleSessionId != null && singleSessionId.length() > 0) {
-					resultList.add(singleSessionId);
-				}
+			singleUserSession = userSessionList.get(i);
+			if (singleUserSession == null) {
 				continue;
 			}
-			
-			if (userSessionList.get(i).getUserType() == USER_TYPE_GAMER) {
+
+			if (singleUserSession.isRoomChief() == true || singleUserSession.getUserType() == USER_TYPE_GAMER) {
 				String singleSessionId = singleSession.getId();
 				if (singleSessionId != null && singleSessionId.length() > 0) {
-					resultList.add(singleSessionId);
+					
+					TurnData turnData = new TurnData();
+					turnData.setSessionId(singleSessionId);
+					turnData.setUserNickName(singleUserSession.getUserNickName());
+					
+					resultList.add(turnData);
 				}
 				continue;
 			}
@@ -569,12 +571,18 @@ public class RoomData implements GameConst {
 	
 	public boolean checkSessionIsTurnNow(Session session) {
 		
-		String gamerId = this.gamerIdList.get(gamerTurnIndex);
+		String gamerId = turnDataList.get(turnDataList.getTurnIndex()).getSessionId();
 		
 		if (gamerId.equals(session.getId())) {
 			return true;
 		}
 		
 		return false;
+	}
+	
+	
+	public String getCurrentTurnUserName() {
+		
+		return turnDataList.get(turnDataList.getTurnIndex()).getUserNickName();
 	}
 }
