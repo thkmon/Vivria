@@ -57,6 +57,8 @@ public class GameService implements GameConst {
 		if (thisTurnUserName == null || thisTurnUserName.length() == 0) {
 			return;
 		}
+		
+		int thisTurnUserIndex = roomData.getCurrentTurnIndex();
 						
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
@@ -66,7 +68,7 @@ public class GameService implements GameConst {
 		// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
 		String msg = "";
 		
-		msg += "SET_TURN|" + thisTurnUserName;
+		msg += "SET_TURN|" + thisTurnUserIndex + "|" + thisTurnUserName;
 		msg += "/+/" + "CHAT|***** [" + userSession.getUserNickName() + "] 님의 접속이 해제되었습니다. *****";
 		
 		String userListString = GameServiceUtil.getUserListString(session);
@@ -456,6 +458,16 @@ public class GameService implements GameConst {
 			newNickName = newNickName.replace(";", "");
 		}
 		
+		// 닉네임 입력시 태그<> 특수문자를 막자.
+		if (newNickName.indexOf("<") > -1) {
+			newNickName = newNickName.replace("<", "");
+		}
+		
+		// 닉네임 입력시 태그<> 특수문자를 막자.
+		if (newNickName.indexOf(">") > -1) {
+			newNickName = newNickName.replace(">", "");
+		}
+		
 		userSession.setUserNickName(newNickName);
 	}
 	
@@ -712,7 +724,9 @@ public class GameService implements GameConst {
 			return null;
 		}
 		
-		String messageForMap = "SET_TURN|" + thisTurnUserName + "/+/" + "DRAW_MAP|" + mapString;
+		int thisTurnUserIndex = roomData.getCurrentTurnIndex();
+		
+		String messageForMap = "SET_TURN|" + thisTurnUserIndex + "|" + thisTurnUserName + "/+/" + "DRAW_MAP|" + mapString;
 		return messageForMap;
 	}
 	

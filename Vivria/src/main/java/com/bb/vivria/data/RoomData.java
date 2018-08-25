@@ -213,6 +213,10 @@ public class RoomData implements GameConst {
 			throw new MessageException("이동할 수 없는 타일입니다.");
 		}
 		
+		if (tile1.getGamerIndex() == -1) {
+			throw new MessageException("타일은 제어할 수 없습니다.");
+		}
+		
 		if (tile1.getGamerIndex() != turnDataList.getCurrentTurnIndex()) {
 			throw new MessageException("남의 캐릭터는 제어할 수 없습니다.");
 		}
@@ -620,6 +624,20 @@ public class RoomData implements GameConst {
 		}
 		
 		return false;
+	}
+	
+	
+	public int getCurrentTurnIndex() {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return -1;
+		}
+		
+		int currentTurnIndex = turnDataList.getCurrentTurnIndex();
+		if (currentTurnIndex < 0) {
+			return -1;
+		}
+		
+		return currentTurnIndex;
 	}
 	
 	

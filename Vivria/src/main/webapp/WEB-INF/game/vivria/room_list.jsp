@@ -5,6 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, user-scalable=no" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>비브리아 대기실</title>
 <script type="text/javascript">
@@ -46,6 +47,11 @@
 			
 		} else {
 			userNickName = userNickName.trim();
+		}
+		
+		if (userNickName.indexOf("<") > -1 || userNickName.indexOf(">") > -1) {
+			alert("닉네임에 태그<> 특수문자를 넣을 수 없습니다.");
+			return false;
 		}
 		
 		// 유저 타입 결정

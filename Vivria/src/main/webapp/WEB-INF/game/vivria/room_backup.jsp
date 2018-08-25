@@ -2,7 +2,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, user-scalable=no" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>비브리아</title>
 <script type="text/javascript">
@@ -17,8 +16,6 @@ var g_gameStart = false;
 var g_selectMode = false;
 var g_selectedTile = "";
 var g_tileArray = null;
-
-var g_tileWidth = 50;
 
 var g_webSocket = null;
 
@@ -171,7 +168,7 @@ function handleServerMessage(_data) {
 		if (!g_gameStart) {
 			document.getElementById("startGameButton").style.display = "none";
 			document.getElementById("readyToGameButton").style.display = "none";
-// 			document.getElementById("releaseSelectionButton").style.display = "";
+			document.getElementById("releaseSelectionButton").style.display = "";
 			g_gameStart = true;
 		} 
 		
@@ -181,33 +178,10 @@ function handleServerMessage(_data) {
 	
 	
 	if (messageKey == "SET_TURN") {
-		
-		var tmpPipeIndex = messageValue.indexOf("|");
-		var turnIndex = messageValue.substring(0, tmpPipeIndex);
-		messageValue = messageValue.substring(tmpPipeIndex + 1);
-		
 		addLineToChatBox("***** [" + messageValue + "]님의 턴입니다. *****");
 		
 		var turnDiv = document.getElementById("turnDiv");
-		if (messageValue.length > 5) {
-			turnDiv.innerText = "[" + messageValue.substring(0, 5) + "..." + "]님의 턴";
-		} else {
-			turnDiv.innerText = "[" + messageValue + "]님의 턴";
-		}
-		
-		var turnColorDiv = document.getElementById("turnColorDiv");
-		if (turnIndex == "0") {
-			turnColorDiv.style.backgroundColor = "red";
-		} else if (turnIndex == "1") {
-			turnColorDiv.style.backgroundColor = "yellow";
-		} else if (turnIndex == "2") {
-			turnColorDiv.style.backgroundColor = "blue";
-		} else if (turnIndex == "3") {
-			turnColorDiv.style.backgroundColor = "green";
-		} else {
-			turnColorDiv.style.backgroundColor = "#000000";
-		}
-		
+		turnDiv.innerText = "[" + messageValue + "]님의 턴";
 		return;
 	}
 	
@@ -217,54 +191,18 @@ function handleServerMessage(_data) {
 			return;
 		}
 		
-		var userNameArray = null;
-		var arrCount = 0;
+		var userListArea = document.getElementById("userListArea");
+		userListArea.value = "";
 		
 		if (messageValue.indexOf(";") > -1) {
-			userNameArray = messageValue.split(";");
-			arrCount = userNameArray.length;
-			
+			var userNameArray = messageValue.split(";");
+			var userCount = userNameArray.length;
+			for (var i=0; i<userCount; i++) {
+				userListArea.value += userNameArray[i] + "\n";		
+			}
 		} else {
-			userNameArray = [];
-			userNameArray[0] = messageValue;
-			arrCount = 1;
+			userListArea.value += messageValue + "\n";
 		}
-		
-		var comboStr = "";
-		
-		var userCount = 0;
-		var singleName = "";
-		for (var i=0; i<arrCount; i++) {
-			if (userNameArray[i] == null) {
-				continue;
-			}
-			
-			singleName = userNameArray[i];
-			if (singleName == null || singleName.length == 0) {
-				continue;
-			}
-			
-			if (singleName.indexOf("<") > -1) {
-				singleName = singleName.relace("<", "");
-			}
-			
-			if (singleName.indexOf(">") > -1) {
-				singleName = singleName.relace(">", "");
-			}
-			
-			if (singleName.length > 10) {
-				singleName = singleName.substring(0, 10) + "...";
-			}
-			
-			comboStr += "<option>" + singleName + "</option>";	
-			userCount++;
-		}
-		
-		comboStr += "</select>";
-		
-		comboStr = "<select style=\"width: 100%; border: 0px; font-size: 1em;\">" + "<option>" + "현재 인원 : " + userCount + "명" + "</option>" + comboStr;
-		
-		userComboDiv.innerHTML = comboStr;
 		return;
 	}
 	
@@ -387,19 +325,15 @@ function drawMap(_messageData) {
 			if (singleTile == "XXX") {
 				if (g_victory == true) {
 					elem.style.backgroundImage = "url('/resources/img/vivria/victory.png')";
-					elem.style.backgroundSize = g_tileWidth + "px";
 				} else if (g_defeat == true) {
 					elem.style.backgroundImage = "url('/resources/img/vivria/defeat.png')";
-					elem.style.backgroundSize = g_tileWidth + "px";
 				} else {
 					elem.style.backgroundImage = "url('/resources/img/vivria/xtile.png')";
-					elem.style.backgroundSize = g_tileWidth + "px";
 				}
 				elem2.innerText = "";
 				
 			} else if (singleTile == "OOO") {
 				elem.style.backgroundImage = "url('/resources/img/vivria/otile.png')";
-				elem.style.backgroundSize = g_tileWidth + "px";
 				elem2.innerText = "";
 				
 			} else {
@@ -447,7 +381,6 @@ function drawMap(_messageData) {
 				}
 				
 				elem.style.backgroundImage = "url('/resources/img/vivria/" + color + number + ".png')";
-				elem.style.backgroundSize = g_tileWidth + "px";
 				elem2.innerText = tileText;
 			}
 			
@@ -464,13 +397,6 @@ function tile_onclick(_row, _col) {
 			return;
 		}
 		
-		// 통행불가 타일 클릭시 선택해제
-		var tmpIndex = getTileIndex(_row, _col);
-		if ("XXX" == g_tileArray[tmpIndex]) {
-			releaseSelection();
-			return;
-		}
-		
 		// 서버로 메시지 전송
 		var moveText = g_selectedTile + "|" + _row + "_" + _col;
 		// alert(moveText);
@@ -478,13 +404,6 @@ function tile_onclick(_row, _col) {
 		releaseSelection();
 			
 	} else {
-		// 통행불가 타일 클릭시 선택해제
-		var tmpIndex = getTileIndex(_row, _col);
-		if ("XXX" == g_tileArray[tmpIndex]) {
-			releaseSelection();
-			return;
-		}
-		
 		var elem = document.getElementById("tile" + _row + "_" + _col);
 		if (elem != null) {
 			showTileMark(_row, _col);
@@ -595,6 +514,12 @@ function getTileIndex(_row, _col) {
 }
 
 
+// 선택해제 버튼 클릭시
+function releaseSelectionButton_onclick() {
+	releaseSelection();
+}
+
+
 // 타일의 선택해제
 function releaseSelection() {
 	var elem = null;
@@ -630,84 +555,6 @@ function scrollDownButton_onclick() {
 	var chatBoxArea = document.getElementById("chatBoxArea");
 	chatBoxArea.scrollTop = chatBoxArea.scrollHeight;
 }
-
-window.onresize = function() {
-	var clientWidth = document.documentElement.clientWidth;
-	clientWidth = getOnlyNumbers(clientWidth);
-	
-	var clientHeight = document.documentElement.clientHeight;
-	clientHeight = getOnlyNumbers(clientHeight);
-	
-	var axisLen = clientWidth;
-	if (axisLen > clientHeight) {
-		axisLen = clientHeight;
-	}
-	
-	axisLen = axisLen - 45;
-	if (axisLen == null) {
-		return false;
-	}
-	
-	var bottomMargin = clientHeight - axisLen;
-	if (bottomMargin < 350) {
-		axisLen = clientHeight - 350;
-	}
-	
-	g_tileWidth = axisLen / 11;
-	var plateWidth = ((g_tileWidth * 11) + 22);
-	
-	var mainPlate = document.getElementById("mainPlate");
-	mainPlate.style.width = plateWidth + "px";
-	mainPlate.style.height = plateWidth + "px";
-	
-	var mainPlateWrapper = document.getElementById("mainPlateWrapper");
-	mainPlateWrapper.style.width = plateWidth + "px";
-	mainPlateWrapper.style.height = plateWidth + "px";
-	
-	var elemList = null;
-	var elemCount = 0;
-	
-	
-	elemList = document.getElementsByClassName("tile_cover");
-	elemCount = elemList.length;
-	for (var i=0; i<elemCount; i++) {
-		elemList[i].style.width = g_tileWidth + "px";
-		elemList[i].style.height = g_tileWidth + "px";
-	}
-	
-	
-	elemList = document.getElementsByClassName("tile");
-	elemCount = elemList.length;
-	for (var i=0; i<elemCount; i++) {
-		elemList[i].style.width = g_tileWidth + "px";
-		elemList[i].style.height = g_tileWidth + "px";
-		elemList[i].style.backgroundSize = g_tileWidth + "px";
-	}
-	
-	return true;
-}
-
-function getOnlyNumbers(_str) {
-	if (_str == null || _str.length == 0) {
-		return 0;
-	}
-	
-	_str = _str + "";
-	
-	var result = "";
-	
-	var ch = "";
-	var len = _str.length;
-	for (var i=0; i<len; i++) {
-		ch = _str.substring(i, i+1);
-		if (ch == "0" || ch == "1" || ch == "2" || ch == "3" || ch == "4" || ch == "5" ||
-			ch == "6" || ch == "7" || ch == "8" || ch == "9") {
-			result = result + ch;
-		}
-	}
-	
-	return parseInt(result, 10);
-}
 </script>
 <style type="text/css">
 	.tile_cover {
@@ -739,107 +586,72 @@ function getOnlyNumbers(_str) {
 	.basic_button {
 		cursor: pointer;
 		height: 32px;
-		font-size: 1.5em;
 	}
 	
 	.turnDiv {
 /* 		border: 1px solid #000000; */
 	}
-	
-	.commonFont {
-		font-size: 1em;
-	}
-	
-	.w100per {
-		width: 100%;
-	}
-	
-	.commonWidth {
-		width: 100%;
-		max-width: 1024px;
-	}
 </style>
 </head>
-<body style="overflow: hidden;">
-	<div id="mainWrap" class="commonWidth" style="margin: 0 auto;">
-		<table class="commonWidth" style="border: 0px solid #000000;">
-			<tr>
-				<td class="w100per">
-					<div id="mainPlateWrapper" style="width: 580px; margin: 0 auto;">
-						<div id="mainPlate" style="border: 1px solid #000000; width: 580px; height: 580px;">
-							<%
-								for (int r=0; r<=10; r++) {
-									for (int c=0; c<=10; c++) {
-										if (c == 0) {
-											out.print("<div>");
-										}
-										
-										String tileCoverDiv = "<span id=\"tile_span" + r + "_" + c + "\" style=\"position: absolute;\"></span>" +
-															  "<div id=\"tile_cover" + r + "_" + c + "\" class=\"tile_cover lfloat\" style=\"display: none;\"></div>";
-										out.print("<div id=\"tile" + r + "_" + c + "\" class=\"tile lfloat\" onclick=\"tile_onclick(" + r + "," + c + ")\">" + tileCoverDiv + "</div>");
-										
-										if (c == 10) {
-											out.print("</div>");
-										}
-									}
-								}
-							%>
-						</div>
-					</div>
-				</td>
-			</tr>
-		</table>
-		<div class="commonWidth">
-			<div style="float: left;">
+<body>
+	<table style="border: 0px solid #000000; width: 100%; max-width: 1024px; min-width: 600px;">
+		<tr>
+			<td style="width: 100%;">
 				<!-- <input id="disconnectButton" class="basic_button" value="연결끊기" type="button" onclick="disconnectButton_onclick()"> -->
 				<input id="readyToGameButton" class="basic_button" value="게임준비" type="button" style="display: none;" onclick="readyToGameButton_onclick()">
 				<input id="startGameButton" class="basic_button" value="게임시작" type="button" style="display: none;" onclick="startGameButton_onclick()">
-			</div>
-			<table class="commonWidth">
-				<tr>
-					<td style="width: 50%;">
-						<div style="width: 100%; height: 30px; overflow: hidden;">
-							<div id="turnColorDiv" style="width: 5%; height: 30px; float: left;"></div>
-							<div id="turnDiv" class="turnDiv commonFont" style="height: 30px; float: left; width: 95%;"></div>
-						</div>
-					</td>
-					<td style="width: 50%;">
-						<div style="width: 100%; height: 30px; overflow: hidden;">
-							<div id="userComboDiv" class="userComboDiv commonFont" style="width: 100%;"></div>
-						</div>
-					</td>
-				<tr>
-			</table>
-			<table class="commonWidth" style="border: 0px solid #000000;">
-				<tr>
-					<td colspan="4">
-						<input id="inputMsgBox" class="commonFont w100per" style="height: 30px;" type="text" onkeypress="inputMsgBox_onkeypress()">
-					</td>
-				</tr>
-				<tr>
-					<td style="width: 25%;">
-						<input id="scrollUpButton" class="basic_button w100per" value="최상단" type="button" onclick="scrollUpButton_onclick()">
-					</td>
-					<td style="width: 25%;">
-						<input id="scrollDownButton" class="basic_button w100per" value="최하단" type="button" onclick="scrollDownButton_onclick()">
-					</td>
-					<td style="width: 25%;">
-						&nbsp;
-					</td>
-					<td style="width: 25%;">
-						
-						<input id="sendButton" class="basic_button w100per" value="전송" type="button" onclick="sendButton_onclick()">
-					</td>
-				</tr>
-			</table>
-			<table class="commonWidth" style="border: 0px solid #000000;">
-				<tr>
-					<td>
-						<textarea id="chatBoxArea" class="commonFont w100per" style="height: 150px;" rows="5" cols="50" readonly="readonly"></textarea>
-					</td>
-				</tr>
-			</table>
-		</div>
-	</div>
+				<input id="releaseSelectionButton" class="basic_button" value="선택해제" type="button" style="display: none;" onclick="releaseSelectionButton_onclick()">
+				<br>
+				<br>
+				<div id="turnDiv" class="turnDiv" style="width: 300px; font-size: 20px;"></div>
+				<br>
+				<br>
+				<div style="border: 0px solid #000000; width: 580px; height: 580px; margin: 0 auto;">
+					<%
+						for (int r=0; r<=10; r++) {
+							for (int c=0; c<=10; c++) {
+								if (c == 0) {
+									out.print("<div>");
+								}
+								
+								String tileCoverDiv = "<span id=\"tile_span" + r + "_" + c + "\" style=\"position: absolute;\"></span>" +
+													  "<div id=\"tile_cover" + r + "_" + c + "\" class=\"tile_cover lfloat\" style=\"display: none;\"></div>";
+								out.print("<div id=\"tile" + r + "_" + c + "\" class=\"tile lfloat\" onclick=\"tile_onclick(" + r + "," + c + ")\">" + tileCoverDiv + "</div>");
+								
+								if (c == 10) {
+									out.print("</div>");
+								}
+							}
+						}
+					%>
+				</div>
+				<br>
+				<table style="border: 0px solid #000000; width: 100%; max-width: 1024px; min-width: 600px;">
+					<tr>
+						<td>
+							<input id="inputMsgBox" style="width: 100%; height: 28px;" type="text" onkeypress="inputMsgBox_onkeypress()">
+						</td>
+						<td style="width: 200px; text-align: right;">
+							<input id="sendButton" class="basic_button" value="전송" type="button" onclick="sendButton_onclick()">
+							&nbsp;
+							<input id="scrollUpButton" class="basic_button" value="최상단" type="button" onclick="scrollUpButton_onclick()">
+							<input id="scrollDownButton" class="basic_button" value="최하단" type="button" onclick="scrollDownButton_onclick()">
+						</td>
+					</tr>
+				</table>
+				<table style="border: 0px solid #000000; width: 100%; max-width: 1024px; min-width: 600px;">
+					<tr>
+						<td style="width: 200px;">
+							<textarea id="userListArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
+						</td>
+						<td>
+							<textarea id="chatBoxArea" style="width: 100%;" rows="10" cols="50" readonly="readonly"></textarea>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+	<br>
 </body>
 </html>

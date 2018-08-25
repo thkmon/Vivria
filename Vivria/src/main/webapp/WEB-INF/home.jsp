@@ -4,7 +4,14 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta name="viewport" content="width=device-width, user-scalable=no" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>홈페이지</title>
+	<style>
+		body {
+			font-size: 1em;
+		}
+	</style>
 </head>
 <body>
 	<h1>홈페이지</h1>
