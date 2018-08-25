@@ -14,6 +14,10 @@ public class UserSession {
 	// 게임준비여부(방장은 불가)
 	private boolean readyToGame = false;
 	
+	// 다시 되살릴 경우 유렁유저(고스트)로 set하고, 또 다시 되살릴 수 없게 만든다.
+	// 그래야 중복이 없다.
+	private boolean bGhostUser = false;
+	
 	
 	/**
 	 * 생성자
@@ -26,7 +30,7 @@ public class UserSession {
 		return session;
 	}
 	
-	private void setSession(Session session) {
+	public void setSession(Session session) {
 		this.session = session;
 	}
 
@@ -62,6 +66,11 @@ public class UserSession {
 		this.readyToGame = readyToGame;
 	}
 	
-	
-	
+	public boolean isbGhostUser() {
+		return bGhostUser;
+	}
+
+	public void setbGhostUser(boolean bGhostUser) {
+		this.bGhostUser = bGhostUser;
+	}
 }

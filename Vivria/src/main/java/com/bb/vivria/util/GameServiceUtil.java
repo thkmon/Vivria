@@ -89,12 +89,16 @@ public class GameServiceUtil implements GameConst {
 	}
 	
 	
-	public static UserSessionList getUserSessionListByRoomId(String roomId) {
+	public static UserSessionList getUserSessionListByRoomId(String roomId) throws MessageException, Exception {
+		if (roomDataMap.get(roomId) == null) {
+			throw new MessageException("존재하지 않는 방입니다.");
+		}
+		
 		return roomDataMap.get(roomId).getUserSessionList();
 	}
 	
 	
-	public static UserSessionList getUserSessionListBySession(Session session) {
+	public static UserSessionList getUserSessionListBySession(Session session) throws MessageException, Exception {
 		String sessionId = session.getId();
 		String roomId = sessionIdAndRoomIdMap.get(sessionId);
 		return getUserSessionListByRoomId(roomId);
@@ -139,7 +143,7 @@ public class GameServiceUtil implements GameConst {
 	}
 	
 	
-	public static UserSession getUserSession(Session session) {
+	public static UserSession getUserSession(Session session) throws MessageException, Exception {
 		if (session == null) {
 			return null;
 		}
@@ -186,7 +190,7 @@ public class GameServiceUtil implements GameConst {
 	}
 	
 	
-	public static String getUserListString(Session session) {
+	public static String getUserListString(Session session) throws MessageException, Exception {
 		if (session == null) {
 			return "";
 		}

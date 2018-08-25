@@ -5,7 +5,6 @@ import javax.websocket.Session;
 import com.bb.vivria.common.GameConst;
 import com.bb.vivria.data.MessageException;
 import com.bb.vivria.data.RoomData;
-import com.bb.vivria.data.TurnDataList;
 import com.bb.vivria.socket.data.UserSession;
 import com.bb.vivria.socket.data.UserSessionList;
 import com.bb.vivria.util.GameServiceUtil;
@@ -30,7 +29,7 @@ public class GameService implements GameConst {
 	/**
 	 * 클라이언트 연결 해제시 호출되는 이벤트
 	 */
-	public void handleDisconnection(Session session) {
+	public void handleDisconnection(Session session) throws MessageException, Exception {
 		if (session == null) {
 			return;
 		}
@@ -166,7 +165,7 @@ public class GameService implements GameConst {
 	/**
 	 * 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
 	 */
-	private boolean sendMessageToAll(Session session, String message) {
+	private boolean sendMessageToAll(Session session, String message) throws MessageException, Exception {
 		return sendMessageToAll(session, message, null);
 	}
 	
@@ -179,7 +178,7 @@ public class GameService implements GameConst {
 	 * @param messageToSingleSession
 	 * @return
 	 */
-	private boolean sendMessageToAll(Session session, String message, String messageToSingleSession) {
+	private boolean sendMessageToAll(Session session, String message, String messageToSingleSession) throws MessageException, Exception {
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
 		if (userSessionList == null) {
@@ -242,7 +241,7 @@ public class GameService implements GameConst {
 	/**
 	 * 유저 닉네임이 이미 사용중인지 체크한다.
 	 */
-	private boolean checkNickNameIsDulicated(Session session, String newNickName) {
+	private boolean checkNickNameIsDulicated(Session session, String newNickName) throws MessageException, Exception {
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
 		if (userSessionList == null) {
@@ -276,12 +275,63 @@ public class GameService implements GameConst {
 	
 	
 	/**
+	 * 로그아웃했던 유저를 찾아가져온다.
+	 * 
+	 * @param newSession
+	 * @param newNickName
+	 * @param bSetGhostUser
+	 * @return
+	 * @throws MessageException
+	 * @throws Exception
+	 */
+	private String getSessionIdIfLogoutUser(Session newSession, String newNickName, boolean bSetGhostUser) throws MessageException, Exception {
+		
+		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(newSession);
+		if (userSessionList == null) {
+			return null;
+		}
+
+		int sessionCount = userSessionList.size();
+		if (sessionCount < 1) {
+			return null;
+		}
+
+		Session singleSession = null;
+
+		for (int i = 0; i < sessionCount; i++) {
+			singleSession = userSessionList.getOriginSession(i);
+			if (singleSession == null) {
+				continue;
+			}
+
+			if (!singleSession.isOpen()) {
+				if (newNickName.equals(userSessionList.get(i).getUserNickName())) {
+					if (userSessionList.get(i).getUserType() == 1) {
+						if (!userSessionList.get(i).isbGhostUser()) {
+							
+							// 로그아웃했던 유저를 찾아가져오면서 유령유저로 만든다.
+							if (bSetGhostUser) {
+								userSessionList.get(i).setbGhostUser(true);
+							}
+							
+							return userSessionList.get(i).getSession().getId();
+						}
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+	
+	
+	/**
 	 * 유저 타입이 게이머(==1)인 유저의 인원수를 구한다.
 	 * 
 	 * @param session
 	 * @return
 	 */
-	public int getCountOfUserTypeGamer(Session session) {
+	public int getCountOfUserTypeGamer(Session session) throws MessageException, Exception {
 		int iResult = 0;
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
@@ -376,7 +426,7 @@ public class GameService implements GameConst {
 	
 	
 	// 채팅 (언제나)
-	private void handleChat(String messageValue, Session session) {
+	private void handleChat(String messageValue, Session session) throws MessageException, Exception {
 		String chatContent = messageValue;
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
@@ -419,7 +469,7 @@ public class GameService implements GameConst {
 	
 	
 	// 유저 닉네임 : 최초접속시 (2)
-	private void handleUserNickName(String messageValue, Session session) {
+	private void handleUserNickName(String messageValue, Session session) throws MessageException, Exception {
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
 			return;
@@ -432,40 +482,42 @@ public class GameService implements GameConst {
 		
 		int loopCount = 0;
 		
-		// 닉네임 중복일 경우 뒤에 1 을 붙이기
-		while (checkNickNameIsDulicated(session, newNickName)) {
-			newNickName = newNickName + "1";
-			
-			loopCount++;
-			if (loopCount > 10) {
-				newNickName = newNickName + "99";
-				break;
+		if (getSessionIdIfLogoutUser(session, newNickName, false) == null) {
+			// 닉네임 중복일 경우 뒤에 1 을 붙이기
+			while (checkNickNameIsDulicated(session, newNickName)) {
+				newNickName = newNickName + "1";
+				
+				loopCount++;
+				if (loopCount > 10) {
+					newNickName = newNickName + "99";
+					break;
+				}
 			}
-		}
-		
-		// 닉네임 입력시 결합문자는 막자.
-		if (newNickName.indexOf("|") > -1) {
-			newNickName = newNickName.replace("|", "");
-		}
-		
-		// 닉네임 입력시 결합문자는 막자.
-		if (newNickName.indexOf("/+/") > -1) {
-			newNickName = newNickName.replace("/+/", "");
-		}
-		
-		// 닉네임 입력시 결합문자는 막자.
-		if (newNickName.indexOf(";") > -1) {
-			newNickName = newNickName.replace(";", "");
-		}
-		
-		// 닉네임 입력시 태그<> 특수문자를 막자.
-		if (newNickName.indexOf("<") > -1) {
-			newNickName = newNickName.replace("<", "");
-		}
-		
-		// 닉네임 입력시 태그<> 특수문자를 막자.
-		if (newNickName.indexOf(">") > -1) {
-			newNickName = newNickName.replace(">", "");
+			
+			// 닉네임 입력시 결합문자는 막자.
+			if (newNickName.indexOf("|") > -1) {
+				newNickName = newNickName.replace("|", "");
+			}
+			
+			// 닉네임 입력시 결합문자는 막자.
+			if (newNickName.indexOf("/+/") > -1) {
+				newNickName = newNickName.replace("/+/", "");
+			}
+			
+			// 닉네임 입력시 결합문자는 막자.
+			if (newNickName.indexOf(";") > -1) {
+				newNickName = newNickName.replace(";", "");
+			}
+			
+			// 닉네임 입력시 태그<> 특수문자를 막자.
+			if (newNickName.indexOf("<") > -1) {
+				newNickName = newNickName.replace("<", "");
+			}
+			
+			// 닉네임 입력시 태그<> 특수문자를 막자.
+			if (newNickName.indexOf(">") > -1) {
+				newNickName = newNickName.replace(">", "");
+			}
 		}
 		
 		userSession.setUserNickName(newNickName);
@@ -473,7 +525,7 @@ public class GameService implements GameConst {
 	
 	
 	// 유저 타입 : 최초접속시 (3)
-	private void handleUserType(String messageValue, Session session) {
+	private void handleUserType(String messageValue, Session session) throws MessageException, Exception {
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
 			return;
@@ -483,41 +535,66 @@ public class GameService implements GameConst {
 			return;
 		}
 		
+		
 		// userType == 1 : 게이머
 		// userType == 2 : 옵저버(관전모드)
 		int newUserType = 1;
 		
-		RoomData roomData = GameServiceUtil.getRoomData(session);
-		if (roomData.isGameIsStarted()) {
-			// 게임 이미 시작되었다면 무조건 관전모드
-			// 관전 모드
-			newUserType = 2;
-			
-		} else {
-			if (messageValue.equals("1") || messageValue.equals("2")) {
-				newUserType = Integer.parseInt(messageValue);
-			} else {
-				return;
-			}
-			
-			// 게이머 모드가 1명도 없으면 게이머 모드로 강제 전환(방장이기 때문)
-			// 게이머 모드가 4명 이상일 경우 관전 모드로 강제 전환
-			int gamerCount = getCountOfUserTypeGamer(session);
-			if (gamerCount < 1) {
-				// 게이머 모드
-				newUserType = 1;
-				
-				// 방장으로 설정
-				userSession.setRoomChief(true);
-				
-				// 방장은 언제나 게임 준비상태임
-				userSession.setReadyToGame(true);
-				
-			} else if (gamerCount >= 4) {
-				// 관전 모드
-				newUserType = 2;
+		
+		// 로그아웃한 사람이 다시 들어왔을 경우 체크
+		boolean bReconnection = false;
+		String logoutSessionId = null;
+		if (messageValue.equals("1")) {
+			String userNickName = userSession.getUserNickName();
+			logoutSessionId = getSessionIdIfLogoutUser(session, userNickName, true);
+			if (logoutSessionId != null && logoutSessionId.length() > 0) {
+				bReconnection = true;
 			}
 		}
+		
+		if (bReconnection) {
+			// 로그아웃한 사람이 다시 들어왔을 경우
+			RoomData roomData = GameServiceUtil.getRoomData(session);
+			roomData.reviveSessionOfTurn(logoutSessionId, session.getId());
+			
+			newUserType = 1;
+			
+		} else {
+			// 일반적인 경우
+			
+			RoomData roomData = GameServiceUtil.getRoomData(session);
+			if (roomData.isGameIsStarted()) {
+				// 게임 이미 시작되었다면 무조건 관전모드
+				// 관전 모드
+				newUserType = 2;
+				
+			} else {
+				if (messageValue.equals("1") || messageValue.equals("2")) {
+					newUserType = Integer.parseInt(messageValue);
+				} else {
+					return;
+				}
+				
+				// 게이머 모드가 1명도 없으면 게이머 모드로 강제 전환(방장이기 때문)
+				// 게이머 모드가 4명 이상일 경우 관전 모드로 강제 전환
+				int gamerCount = getCountOfUserTypeGamer(session);
+				if (gamerCount < 1) {
+					// 게이머 모드
+					newUserType = 1;
+					
+					// 방장으로 설정
+					userSession.setRoomChief(true);
+					
+					// 방장은 언제나 게임 준비상태임
+					userSession.setReadyToGame(true);
+					
+				} else if (gamerCount >= 4) {
+					// 관전 모드
+					newUserType = 2;
+				}
+			}
+		}
+		
 		
 		userSession.setUserType(newUserType);
 		
@@ -526,7 +603,10 @@ public class GameService implements GameConst {
 		// 나머지 접속자에게는 CHAT 을 던져주자.
 		String messageToSingleSession = "";
 		
-		if (userSession.isRoomChief()) {
+		if (bReconnection) {
+			messageToSingleSession = "SET_TYPE_REGAMER|***** [" + userSession.getUserNickName() + "] 님이 재접속하였습니다. *****";
+			
+		} else if (userSession.isRoomChief()) {
 			messageToSingleSession = "SET_TYPE_CHIEF|***** [" + userSession.getUserNickName() + "] (방장) 님이 접속하였습니다. *****";
 			
 		} else if (newUserType == USER_TYPE_GAMER) { 
@@ -538,7 +618,9 @@ public class GameService implements GameConst {
 		
 		
 		String msg = "";
-		if (newUserType == USER_TYPE_OBSERVER) {
+		if (bReconnection) {
+			msg = "CHAT|***** [" + userSession.getUserNickName() + "] 님이 재접속하였습니다. *****";
+		} else if (newUserType == USER_TYPE_OBSERVER) {
 			msg = "CHAT|***** [" + userSession.getUserNickName() + "] (관전모드) 님이 접속하였습니다. *****";
 		} else {
 			msg = "CHAT|***** [" + userSession.getUserNickName() + "] 님이 접속하였습니다. *****";

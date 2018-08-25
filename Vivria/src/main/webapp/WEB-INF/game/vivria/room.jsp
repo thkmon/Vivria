@@ -116,6 +116,12 @@ window.onload = function() {
 	g_webSocket.onerror = function(message) {
 		addLineToChatBox("Error!");
 	};
+
+	
+	window.setTimeout(function(){
+		// 리사이즈
+		resizeWindow();
+	}, 1000);
 }
 
 
@@ -141,7 +147,7 @@ function handleServerMessage(_data) {
 	}
 	
 	if (messageKey == "MESSAGE") {
-		alert(messageValue);
+		showAlert(messageValue);
 		return;
 	}
 	
@@ -155,6 +161,15 @@ function handleServerMessage(_data) {
 		document.getElementById("startGameButton").style.display = "none";
 		document.getElementById("readyToGameButton").style.display = "";
 		addLineToChatBox(messageValue);
+		return;
+	
+	} else if (messageKey == "SET_TYPE_REGAMER") {
+		document.getElementById("startGameButton").style.display = "";
+		document.getElementById("readyToGameButton").style.display = "";
+		addLineToChatBox(messageValue);
+		
+		// 서버로 메시지 전송
+		g_webSocket.send("REFRESH_MAP");
 		return;
 		
 	} else if (messageKey == "SET_TYPE_OBSERVER") {
@@ -289,7 +304,7 @@ function handleServerMessage(_data) {
 	}
 	
 	
-	alert("기타메시지 : " + messageData);
+	showAlert("기타메시지 : " + messageData);
 }
 
 
@@ -473,7 +488,7 @@ function tile_onclick(_row, _col) {
 		
 		// 서버로 메시지 전송
 		var moveText = g_selectedTile + "|" + _row + "_" + _col;
-		// alert(moveText);
+		// showAlert(moveText);
 		g_webSocket.send("MOVE_UNIT|" + moveText);
 		releaseSelection();
 			
@@ -620,38 +635,68 @@ function releaseSelection() {
 
 // 최상단
 function scrollUpButton_onclick() {
-	var chatBoxArea = document.getElementById("chatBoxArea");
-	chatBoxArea.scrollTop = 0;
+	// var chatBoxArea = document.getElementById("chatBoxArea");
+	// chatBoxArea.scrollTop = 0;
+	
+	var mainWrap = document.getElementById("mainWrap");
+	mainWrap.scrollTop = 0;
 }
 
 
 // 최하단
 function scrollDownButton_onclick() {
-	var chatBoxArea = document.getElementById("chatBoxArea");
-	chatBoxArea.scrollTop = chatBoxArea.scrollHeight;
+	// var chatBoxArea = document.getElementById("chatBoxArea");
+	// chatBoxArea.scrollTop = chatBoxArea.scrollHeight;
+	
+	var mainWrap = document.getElementById("mainWrap");
+	mainWrap.scrollTop = mainWrap.scrollHeight;
 }
 
+
 window.onresize = function() {
+	// 리사이즈
+	resizeWindow();
+}
+
+
+
+function resizeWindow() {
 	var clientWidth = document.documentElement.clientWidth;
 	clientWidth = getOnlyNumbers(clientWidth);
-	
-	var clientHeight = document.documentElement.clientHeight;
-	clientHeight = getOnlyNumbers(clientHeight);
-	
-	var axisLen = clientWidth;
-	if (axisLen > clientHeight) {
-		axisLen = clientHeight;
-	}
-	
-	axisLen = axisLen - 45;
-	if (axisLen == null) {
+	if (clientWidth == null) {
 		return false;
 	}
 	
-	var bottomMargin = clientHeight - axisLen;
-	if (bottomMargin < 350) {
-		axisLen = clientHeight - 350;
+	var clientHeight = document.documentElement.clientHeight;
+	clientHeight = getOnlyNumbers(clientHeight);
+	if (clientHeight == null) {
+		return false;
 	}
+	
+	var mainWrap = document.getElementById("mainWrap");
+	mainWrap.style.height = clientHeight + "px";
+	
+	// 800 이하는 모바일로 인식.
+	if (clientWidth < 800) {
+		// 모바일은 무조건 가로 기준으로 고정.
+		// 키입력 등 세로 길이가 계속 바뀌어서, 크기가 왔다갔다하는 문제 있음.
+		var axisLen = clientWidth;
+		axisLen = axisLen - 45;
+		
+	} else {
+		var axisLen = clientWidth;
+	 	if (axisLen > clientHeight) {
+	 		axisLen = clientHeight;
+	 	}
+		
+		axisLen = axisLen - 45;
+		
+	 	var bottomMargin = clientHeight - axisLen;
+	 	if (bottomMargin < 350) {
+	 		axisLen = clientHeight - 350;
+	 	}
+	}
+	
 	
 	g_tileWidth = axisLen / 11;
 	var plateWidth = ((g_tileWidth * 11) + 22);
@@ -687,6 +732,7 @@ window.onresize = function() {
 	return true;
 }
 
+
 function getOnlyNumbers(_str) {
 	if (_str == null || _str.length == 0) {
 		return 0;
@@ -707,6 +753,21 @@ function getOnlyNumbers(_str) {
 	}
 	
 	return parseInt(result, 10);
+}
+
+
+function showAlert(_str) {
+	if (_str == null || _str.length == 0) {
+		return false;
+	}
+	
+	var alertDiv = document.getElementById("alertDiv");
+	alertDiv.style.display = "";
+	alertDiv.innerText = _str;
+	
+	window.setTimeout(function(){
+		alertDiv.style.display = "none";	
+	}, 1000);
 }
 </script>
 <style type="text/css">
@@ -739,7 +800,7 @@ function getOnlyNumbers(_str) {
 	.basic_button {
 		cursor: pointer;
 		height: 32px;
-		font-size: 1.5em;
+		font-size: 1em;
 	}
 	
 	.turnDiv {
@@ -758,10 +819,26 @@ function getOnlyNumbers(_str) {
 		width: 100%;
 		max-width: 1024px;
 	}
+	
+	.alertDiv {
+		overflow: hidden;
+		top: 50px;
+		width: 50%;
+		height: 50px;
+		font-size: 1em;
+		color: #FFFFFF;
+		background-color: #000000;
+		position: fixed;
+		margin-left: 25%;
+		
+		padding-left: 10px;
+		padding-top: 10px;
+	}
 </style>
 </head>
-<body style="overflow: hidden;">
-	<div id="mainWrap" class="commonWidth" style="margin: 0 auto;">
+<body style="overflow: hidden; margin: 0; padding: 0;">
+	<div id="mainWrap" class="commonWidth" style="margin: 0 auto; overflow-x: hidden; overflow-y: auto;">
+		<div id="alertDiv" class="alertDiv" style="display: none;"></div>
 		<table class="commonWidth" style="border: 0px solid #000000;">
 			<tr>
 				<td class="w100per">
@@ -774,7 +851,7 @@ function getOnlyNumbers(_str) {
 											out.print("<div>");
 										}
 										
-										String tileCoverDiv = "<span id=\"tile_span" + r + "_" + c + "\" style=\"position: absolute;\"></span>" +
+										String tileCoverDiv = "<div style=\"width: 1px; height: 1px;\"><div id=\"tile_span" + r + "_" + c + "\" style=\"position: float;\"></div></div>" +
 															  "<div id=\"tile_cover" + r + "_" + c + "\" class=\"tile_cover lfloat\" style=\"display: none;\"></div>";
 										out.print("<div id=\"tile" + r + "_" + c + "\" class=\"tile lfloat\" onclick=\"tile_onclick(" + r + "," + c + ")\">" + tileCoverDiv + "</div>");
 										

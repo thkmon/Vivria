@@ -109,7 +109,7 @@ public class RoomData implements GameConst {
 	 * 
 	 * @param session
 	 */
-	public void startNewGame(Session session) {
+	public void startNewGame(Session session) throws MessageException, Exception {
 
 		// 게이머 리스트 구한다.
 		turnDataList = createGamerIdList(session);
@@ -154,6 +154,15 @@ public class RoomData implements GameConst {
 		}
 		
 		turnDataList.setTurnIsOver(sessionIdToRemove);
+	}
+	
+	
+	public void reviveSessionOfTurn(String sessionIdToRevive, String newSessionId) {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return;
+		}
+		
+		turnDataList.reviveOveredTurn(sessionIdToRevive, newSessionId);
 	}
 	
 	
@@ -505,7 +514,7 @@ public class RoomData implements GameConst {
 	 * @param session
 	 * @return
 	 */
-	private TurnDataList createGamerIdList(Session session) {
+	private TurnDataList createGamerIdList(Session session) throws MessageException, Exception {
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
 		if (userSessionList == null) {
@@ -555,7 +564,7 @@ public class RoomData implements GameConst {
 	}
 	
 	
-	public String getUserListString(Session session) {
+	public String getUserListString(Session session) throws MessageException, Exception {
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(session);
 		if (userSessionList == null) {

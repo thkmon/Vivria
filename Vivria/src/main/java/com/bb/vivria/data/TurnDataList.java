@@ -128,6 +128,43 @@ public class TurnDataList extends ArrayList<TurnData> {
 	/**
 	 * 접속 해제된 세션에 대해서 턴 객체 만료시킨다.
 	 * 
+	 * @param sessionIdToRevive
+	 * @param newSessionId
+	 */
+	public void reviveOveredTurn(String sessionIdToRevive, String newSessionId) {
+		if (this.size() == 0) {
+			return;
+		}
+		
+		if (sessionIdToRevive == null || sessionIdToRevive.length() == 0) {
+			return;
+		}
+		
+		if (newSessionId == null || newSessionId.length() == 0) {
+			return;
+		}
+		
+		TurnData turnData = null;
+		int count = this.size();
+		for (int i=0; i<count; i++) {
+			turnData = this.get(i);
+			if (turnData == null) {
+				continue;
+			}
+			
+			String singleSessionId = turnData.getSessionId();
+			if (singleSessionId != null && singleSessionId.equals(sessionIdToRevive)) {
+				this.get(i).setSessionId(newSessionId);
+				this.get(i).setbIsOver(false);
+				break;
+			}
+		}
+	}
+	
+	
+	/**
+	 * 접속 해제된 세션에 대해서 턴 객체 만료시킨다.
+	 * 
 	 * @param turnOverSessionId
 	 */
 	public void setTurnIsOver(String turnOverSessionId) {

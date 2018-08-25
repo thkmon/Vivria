@@ -17,6 +17,8 @@ public class UserSessionList extends ArrayList<UserSession> {
 	}
 	
 	
+	
+	
 	public Session getOriginSession(int index) {
 		return this.get(index).getSession();
 	}

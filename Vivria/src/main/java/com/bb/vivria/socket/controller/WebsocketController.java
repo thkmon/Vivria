@@ -51,7 +51,20 @@ public class WebsocketController {
 	 */
 	@OnClose
 	public void handleClose(Session session) {
-		new GameService().handleDisconnection(session);
+		
+		GameService gameService = null;
+		
+		try {
+			gameService = new GameService();
+			gameService.handleDisconnection(session);
+		
+		} catch (MessageException e) {
+			gameService.sendMessageToOne(session, "MESSAGE|" + e.getMessage());
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			gameService.sendMessageToOne(session, "MESSAGE|" + e.getMessage());
+		}
 	}
 
 	
