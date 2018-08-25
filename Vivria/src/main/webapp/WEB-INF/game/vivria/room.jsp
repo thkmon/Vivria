@@ -321,9 +321,14 @@ function addLineToChatBox(_line) {
 	chatBoxArea.scrollTop = chatBoxArea.scrollHeight;
 	
 	// 공지류는 alert뜨게 처리.
-	if (_line != null && _line.length > 5) {
+	if (_line.length > 5) {
 		if (_line.substring(0, 5) == "*****") {
-			showAlert(_line);
+			_line = _line.replace("*****", "");
+			_line = _line.replace("*****", "");
+			_line.trim();
+			if (_line.length > 0) {
+				showAlert(_line);
+			}
 		}	
 	}
 }
@@ -736,12 +741,6 @@ function resizeWindow() {
 		elemList[i].style.backgroundSize = g_tileWidth + "px";
 	}
 	
-// 	var alertDiv = document.getElementById("alertDiv");
-// 	alertDiv.style.top = "50px";
-// 	alertDiv.style.width = clientWidth / 2;
-// 	alertDiv.style.height = "50px";
-// 	alertDiv.style.marginLeft = clientWidth / 4;
-	
 	return true;
 }
 
@@ -852,7 +851,7 @@ function showAlert(_str) {
 </style>
 </head>
 <body style="overflow: hidden; margin: 0; padding: 0;">
-	<div id="alertDiv" class="alertDiv" style="display: none;"></div>
+	<div id="alertDiv" class="alertDiv" style="display: none; text-align: center;"></div>
 	<div id="mainWrap" class="commonWidth" style="margin: 0 auto; overflow-x: hidden; overflow-y: auto;">
 		<table class="commonWidth" style="border: 0px solid #000000;">
 			<tr>
