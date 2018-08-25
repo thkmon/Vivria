@@ -5,6 +5,7 @@ import javax.websocket.Session;
 import com.bb.vivria.common.GameConst;
 import com.bb.vivria.data.MessageException;
 import com.bb.vivria.data.RoomData;
+import com.bb.vivria.data.TurnData;
 import com.bb.vivria.socket.data.UserSession;
 import com.bb.vivria.socket.data.UserSessionList;
 import com.bb.vivria.util.GameServiceUtil;
@@ -49,16 +50,17 @@ public class GameService implements GameConst {
 			return;
 		}
 		
+		// 턴 만료시키기
 		roomData.removeSessionOfTurn(sessionId);
 		
 		// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
-		String msg = "";
+		StringBuffer msgBuff = new StringBuffer();
 		
 		// 현재턴 게이머 이름
 		String thisTurnUserName = roomData.getCurrentTurnUserName();
 		if (thisTurnUserName != null && thisTurnUserName.length() > 0) {
 			int thisTurnUserIndex = roomData.getCurrentTurnIndex();
-			msg += "SET_TURN|" + thisTurnUserIndex + "|" + thisTurnUserName;
+			msgBuff.append("SET_TURN|").append(thisTurnUserIndex).append("|").append(thisTurnUserName);
 		}
 		
 		UserSession userSession = GameServiceUtil.getUserSession(session);
@@ -71,16 +73,16 @@ public class GameService implements GameConst {
 			userSession.setbCanRevive(true);
 		}
 		
-		if (msg.length() > 0) {
-			msg += "/+/";
+		if (msgBuff.length() > 0) {
+			msgBuff.append("/+/");
 		}
 		
-		msg += "CHAT|***** [" + userSession.getUserNickName() + "] 님의 접속이 해제되었습니다. *****";
+		msgBuff.append("CHAT|***** [").append(userSession.getUserNickName()).append("] 님의 접속이 해제되었습니다. *****");
 		
 		String userListString = GameServiceUtil.getUserListString(session);
-		msg += "/+/" + "SET_USERLIST|" + userListString;
+		msgBuff.append("/+/").append("SET_USERLIST|").append(userListString);
 		
-		sendMessageToAll(session, msg);
+		sendMessageToAll(session, msgBuff.toString());
 		
 		return;
 	}
@@ -282,7 +284,7 @@ public class GameService implements GameConst {
 	
 	
 	/**
-	 * 로그아웃했던 유저를 찾아가져온다.
+	 * 로그아웃했던 유저를 찾아 가져온다.
 	 * 
 	 * @param newSession
 	 * @param newNickName
@@ -303,6 +305,7 @@ public class GameService implements GameConst {
 			return null;
 		}
 
+		UserSession singleUserSession = null;
 		Session singleSession = null;
 
 		for (int i = 0; i < sessionCount; i++) {
@@ -312,11 +315,14 @@ public class GameService implements GameConst {
 			}
 
 			if (!singleSession.isOpen()) {
-				if (newNickName.equals(userSessionList.get(i).getUserNickName())) {
-					if (userSessionList.get(i).getUserType() == 1) {
-						if (userSessionList.get(i).isbCanRevive()) {
+				singleUserSession = userSessionList.get(i);
+				
+				if (newNickName.equals(singleUserSession.getUserNickName())) {
+					if (singleUserSession.getUserType() == 1) {
+						if (singleUserSession.isbCanRevive()) {
 							
 							// 로그아웃했던 유저를 찾아가져오면서 유령유저(되살리지 못하는 유저)로 만든다.
+							// 세션 객체를 만료시키기 위함.
 							if (bForbidRevive) {
 								userSessionList.get(i).setbCanRevive(false);
 							}
@@ -543,6 +549,11 @@ public class GameService implements GameConst {
 		}
 		
 		
+		RoomData roomData = GameServiceUtil.getRoomData(session);
+		if (roomData == null) {
+			return;
+		}
+		
 		// userType == 1 : 게이머
 		// userType == 2 : 옵저버(관전모드)
 		int newUserType = 1;
@@ -555,21 +566,23 @@ public class GameService implements GameConst {
 			String userNickName = userSession.getUserNickName();
 			logoutSessionId = getSessionIdIfLogoutUser(session, userNickName, true);
 			if (logoutSessionId != null && logoutSessionId.length() > 0) {
-				bReconnection = true;
+				
+				TurnData oldTurnData = roomData.getTurnData(logoutSessionId);
+				if (oldTurnData != null && oldTurnData.isbIsOver() && !oldTurnData.isbKingIsDead()) {
+					bReconnection = true;
+				}
 			}
 		}
 		
+		
 		if (bReconnection) {
 			// 로그아웃한 사람이 다시 들어왔을 경우
-			RoomData roomData = GameServiceUtil.getRoomData(session);
 			roomData.reviveSessionOfTurn(logoutSessionId, session.getId());
 			
 			newUserType = 1;
 			
 		} else {
 			// 일반적인 경우
-			
-			RoomData roomData = GameServiceUtil.getRoomData(session);
 			if (roomData.isGameIsStarted()) {
 				// 게임 이미 시작되었다면 무조건 관전모드
 				// 관전 모드

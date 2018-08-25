@@ -7,6 +7,7 @@ public class TurnData {
 	
 	// 턴 객체 만료여부
 	private boolean bIsOver = false;
+	private boolean bKingIsDead = false;
 	
 	
 	public String getSessionId() {
@@ -37,4 +38,16 @@ public class TurnData {
 	public void setbIsOver(boolean bIsOver) {
 		this.bIsOver = bIsOver;
 	}
+
+
+	public boolean isbKingIsDead() {
+		return bKingIsDead;
+	}
+
+
+	public void setbKingIsDead(boolean bKingIsDead) {
+		this.bKingIsDead = bKingIsDead;
+	}
+	
+	
 }

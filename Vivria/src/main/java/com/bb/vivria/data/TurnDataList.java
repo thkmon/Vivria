@@ -126,7 +126,7 @@ public class TurnDataList extends ArrayList<TurnData> {
 	
 	
 	/**
-	 * 접속 해제된 세션에 대해서 턴 객체 만료시킨다.
+	 * 접속 해제된 세션에 대해서 턴 객체 되살린다.
 	 * 
 	 * @param sessionIdToRevive
 	 * @param newSessionId
@@ -166,8 +166,9 @@ public class TurnDataList extends ArrayList<TurnData> {
 	 * 접속 해제된 세션에 대해서 턴 객체 만료시킨다.
 	 * 
 	 * @param turnOverSessionId
+	 * @param bKingIsDead
 	 */
-	public void setTurnIsOver(String turnOverSessionId) {
+	public void setTurnIsOver(String turnOverSessionId, boolean bKingIsDead) {
 		if (this.size() == 0) {
 			return;
 		}
@@ -187,6 +188,7 @@ public class TurnDataList extends ArrayList<TurnData> {
 			String singleSessionId = turnData.getSessionId();
 			if (singleSessionId != null && singleSessionId.equals(turnOverSessionId)) {
 				this.get(i).setbIsOver(true);
+				this.get(i).setbKingIsDead(bKingIsDead);
 				break;
 			}
 		}
@@ -201,8 +203,35 @@ public class TurnDataList extends ArrayList<TurnData> {
 		// 왕이 죽은 게이머의 턴을 만료시킨다.
 		String sessionIdToRemove = this.get(kingIndex).getSessionId();
 		String userNickName = this.get(kingIndex).getUserNickName();
-		setTurnIsOver(sessionIdToRemove);
+		setTurnIsOver(sessionIdToRemove, true);
 		
 		return userNickName;
+	}
+	
+	
+	public TurnData getTurnData(String sessionId) {
+		if (this.size() == 0) {
+			return null;
+		}
+		
+		if (sessionId == null || sessionId.length() == 0) {
+			return null;
+		}
+		
+		TurnData turnData = null;
+		int count = this.size();
+		for (int i=0; i<count; i++) {
+			turnData = this.get(i);
+			if (turnData == null) {
+				continue;
+			}
+			
+			String singleSessionId = turnData.getSessionId();
+			if (singleSessionId != null && singleSessionId.equals(sessionId)) {
+				return this.get(i);
+			}
+		}
+		
+		return null;
 	}
 }

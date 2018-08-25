@@ -153,10 +153,16 @@ public class RoomData implements GameConst {
 			return;
 		}
 		
-		turnDataList.setTurnIsOver(sessionIdToRemove);
+		turnDataList.setTurnIsOver(sessionIdToRemove, false);
 	}
 	
 	
+	/**
+	 * 턴을 되살린다.
+	 * 
+	 * @param sessionIdToRevive
+	 * @param newSessionId
+	 */
 	public void reviveSessionOfTurn(String sessionIdToRevive, String newSessionId) {
 		if (turnDataList == null || turnDataList.size() == 0) {
 			return;
@@ -664,6 +670,20 @@ public class RoomData implements GameConst {
 	}
 	
 	
+	public TurnData getCurrentTurn() {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return null;
+		}
+		
+		int currentTurnIndex = turnDataList.getCurrentTurnIndex();
+		if (currentTurnIndex < 0) {
+			return null;
+		}
+		
+		return turnDataList.get(currentTurnIndex);
+	}
+	
+	
 	public void doProcessWhenKingIsDead(int kingIndex) {
 		if (turnDataList == null || turnDataList.size() == 0) {
 			return;
@@ -682,5 +702,14 @@ public class RoomData implements GameConst {
 		}
 		
 		return turnDataList.getVictoryUserName();
+	}
+	
+	
+	public TurnData getTurnData(String sessionId) {
+		if (turnDataList == null || turnDataList.size() == 0) {
+			return null;
+		}
+		
+		return turnDataList.getTurnData(sessionId);
 	}
 }
