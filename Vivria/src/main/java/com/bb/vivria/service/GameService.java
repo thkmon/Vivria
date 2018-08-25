@@ -51,24 +51,31 @@ public class GameService implements GameConst {
 		
 		roomData.removeSessionOfTurn(sessionId);
 		
+		// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
+		String msg = "";
+		
 		// 현재턴 게이머 이름
 		String thisTurnUserName = roomData.getCurrentTurnUserName();
-		if (thisTurnUserName == null || thisTurnUserName.length() == 0) {
-			return;
+		if (thisTurnUserName != null && thisTurnUserName.length() > 0) {
+			int thisTurnUserIndex = roomData.getCurrentTurnIndex();
+			msg += "SET_TURN|" + thisTurnUserIndex + "|" + thisTurnUserName;
 		}
 		
-		int thisTurnUserIndex = roomData.getCurrentTurnIndex();
-						
 		UserSession userSession = GameServiceUtil.getUserSession(session);
 		if (userSession == null) {
 			return;
 		}
 		
-		// 웹소켓 연결 성립되어 있는 모든 사용자에게 메시지 전송
-		String msg = "";
+		// 게임이 이미 시작되어 진행 중인 경우, 되살릴 수 있게 만든다.
+		if (roomData.isGameIsStarted()) {
+			userSession.setbCanRevive(true);
+		}
 		
-		msg += "SET_TURN|" + thisTurnUserIndex + "|" + thisTurnUserName;
-		msg += "/+/" + "CHAT|***** [" + userSession.getUserNickName() + "] 님의 접속이 해제되었습니다. *****";
+		if (msg.length() > 0) {
+			msg += "/+/";
+		}
+		
+		msg += "CHAT|***** [" + userSession.getUserNickName() + "] 님의 접속이 해제되었습니다. *****";
 		
 		String userListString = GameServiceUtil.getUserListString(session);
 		msg += "/+/" + "SET_USERLIST|" + userListString;
@@ -279,12 +286,12 @@ public class GameService implements GameConst {
 	 * 
 	 * @param newSession
 	 * @param newNickName
-	 * @param bSetGhostUser
+	 * @param bForbidRevive
 	 * @return
 	 * @throws MessageException
 	 * @throws Exception
 	 */
-	private String getSessionIdIfLogoutUser(Session newSession, String newNickName, boolean bSetGhostUser) throws MessageException, Exception {
+	private String getSessionIdIfLogoutUser(Session newSession, String newNickName, boolean bForbidRevive) throws MessageException, Exception {
 		
 		UserSessionList userSessionList = GameServiceUtil.getUserSessionListBySession(newSession);
 		if (userSessionList == null) {
@@ -307,11 +314,11 @@ public class GameService implements GameConst {
 			if (!singleSession.isOpen()) {
 				if (newNickName.equals(userSessionList.get(i).getUserNickName())) {
 					if (userSessionList.get(i).getUserType() == 1) {
-						if (!userSessionList.get(i).isbGhostUser()) {
+						if (userSessionList.get(i).isbCanRevive()) {
 							
-							// 로그아웃했던 유저를 찾아가져오면서 유령유저로 만든다.
-							if (bSetGhostUser) {
-								userSessionList.get(i).setbGhostUser(true);
+							// 로그아웃했던 유저를 찾아가져오면서 유령유저(되살리지 못하는 유저)로 만든다.
+							if (bForbidRevive) {
+								userSessionList.get(i).setbCanRevive(false);
 							}
 							
 							return userSessionList.get(i).getSession().getId();

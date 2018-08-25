@@ -16,7 +16,7 @@ public class UserSession {
 	
 	// 다시 되살릴 경우 유렁유저(고스트)로 set하고, 또 다시 되살릴 수 없게 만든다.
 	// 그래야 중복이 없다.
-	private boolean bGhostUser = false;
+	private boolean bCanRevive = false;
 	
 	
 	/**
@@ -65,12 +65,12 @@ public class UserSession {
 	public void setReadyToGame(boolean readyToGame) {
 		this.readyToGame = readyToGame;
 	}
-	
-	public boolean isbGhostUser() {
-		return bGhostUser;
+
+	public boolean isbCanRevive() {
+		return bCanRevive;
 	}
 
-	public void setbGhostUser(boolean bGhostUser) {
-		this.bGhostUser = bGhostUser;
+	public void setbCanRevive(boolean bCanRevive) {
+		this.bCanRevive = bCanRevive;
 	}
 }

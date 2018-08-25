@@ -164,8 +164,8 @@ function handleServerMessage(_data) {
 		return;
 	
 	} else if (messageKey == "SET_TYPE_REGAMER") {
-		document.getElementById("startGameButton").style.display = "";
-		document.getElementById("readyToGameButton").style.display = "";
+		document.getElementById("startGameButton").style.display = "none";
+		document.getElementById("readyToGameButton").style.display = "none";
 		addLineToChatBox(messageValue);
 		
 		// 서버로 메시지 전송
