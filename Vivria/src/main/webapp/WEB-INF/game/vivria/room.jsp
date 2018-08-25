@@ -319,6 +319,13 @@ function addLineToChatBox(_line) {
 	var chatBoxArea = document.getElementById("chatBoxArea");
 	chatBoxArea.value += _line + "\n";
 	chatBoxArea.scrollTop = chatBoxArea.scrollHeight;
+	
+	// 공지류는 alert뜨게 처리.
+	if (_line != null && _line.length > 5) {
+		if (_line.substring(0, 5) == "*****") {
+			showAlert(_line);
+		}	
+	}
 }
 
 
@@ -729,6 +736,12 @@ function resizeWindow() {
 		elemList[i].style.backgroundSize = g_tileWidth + "px";
 	}
 	
+// 	var alertDiv = document.getElementById("alertDiv");
+// 	alertDiv.style.top = "50px";
+// 	alertDiv.style.width = clientWidth / 2;
+// 	alertDiv.style.height = "50px";
+// 	alertDiv.style.marginLeft = clientWidth / 4;
+	
 	return true;
 }
 
@@ -822,14 +835,16 @@ function showAlert(_str) {
 	
 	.alertDiv {
 		overflow: hidden;
+		
 		top: 50px;
-		width: 50%;
 		height: 50px;
+		width: 50%;
+		margin-left: 25%;
+		
 		font-size: 1em;
 		color: #FFFFFF;
 		background-color: #000000;
 		position: fixed;
-		margin-left: 25%;
 		
 		padding-left: 10px;
 		padding-top: 10px;
@@ -837,8 +852,8 @@ function showAlert(_str) {
 </style>
 </head>
 <body style="overflow: hidden; margin: 0; padding: 0;">
+	<div id="alertDiv" class="alertDiv" style="display: none;"></div>
 	<div id="mainWrap" class="commonWidth" style="margin: 0 auto; overflow-x: hidden; overflow-y: auto;">
-		<div id="alertDiv" class="alertDiv" style="display: none;"></div>
 		<table class="commonWidth" style="border: 0px solid #000000;">
 			<tr>
 				<td class="w100per">
