@@ -568,7 +568,7 @@ public class GameService implements GameConst {
 			if (logoutSessionId != null && logoutSessionId.length() > 0) {
 				
 				TurnData oldTurnData = roomData.getTurnData(logoutSessionId);
-				if (oldTurnData != null && oldTurnData.isbIsOver() && !oldTurnData.isbKingIsDead()) {
+				if (oldTurnData != null && oldTurnData.isbDisconnected() && !oldTurnData.isbGameOver()) {
 					bReconnection = true;
 				}
 			}

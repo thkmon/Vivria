@@ -21,7 +21,7 @@ public class TurnDataList extends ArrayList<TurnData> {
 				continue;
 			}
 			
-			if (this.get(i).isbIsOver()) {
+			if (this.get(i).isbDisconnected()) {
 				continue;
 			}
 			
@@ -36,7 +36,7 @@ public class TurnDataList extends ArrayList<TurnData> {
 				continue;
 			}
 			
-			if (this.get(i).isbIsOver()) {
+			if (this.get(i).isbDisconnected()) {
 				continue;
 			}
 			
@@ -63,7 +63,7 @@ public class TurnDataList extends ArrayList<TurnData> {
 				continue;
 			}
 			
-			if (this.get(i).isbIsOver()) {
+			if (this.get(i).isbDisconnected()) {
 				continue;
 			}
 			
@@ -78,7 +78,7 @@ public class TurnDataList extends ArrayList<TurnData> {
 				continue;
 			}
 			
-			if (this.get(i).isbIsOver()) {
+			if (this.get(i).isbDisconnected()) {
 				continue;
 			}
 			
@@ -107,7 +107,7 @@ public class TurnDataList extends ArrayList<TurnData> {
 				continue;
 			}
 			
-			if (turnData.isbIsOver()) {
+			if (turnData.isbDisconnected()) {
 				continue;
 			}
 			
@@ -155,7 +155,7 @@ public class TurnDataList extends ArrayList<TurnData> {
 			String singleSessionId = turnData.getSessionId();
 			if (singleSessionId != null && singleSessionId.equals(sessionIdToRevive)) {
 				this.get(i).setSessionId(newSessionId);
-				this.get(i).setbIsOver(false);
+				this.get(i).setbDisconnected(false);
 				break;
 			}
 		}
@@ -187,8 +187,12 @@ public class TurnDataList extends ArrayList<TurnData> {
 			
 			String singleSessionId = turnData.getSessionId();
 			if (singleSessionId != null && singleSessionId.equals(turnOverSessionId)) {
-				this.get(i).setbIsOver(true);
-				this.get(i).setbKingIsDead(bKingIsDead);
+				this.get(i).setbDisconnected(true);
+				
+				if (bKingIsDead) {
+					this.get(i).setbGameOver(true);
+				}
+				
 				break;
 			}
 		}

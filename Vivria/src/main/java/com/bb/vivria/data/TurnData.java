@@ -6,8 +6,8 @@ public class TurnData {
 	private String userNickName = null;
 	
 	// 턴 객체 만료여부
-	private boolean bIsOver = false;
-	private boolean bKingIsDead = false;
+	private boolean bDisconnected = false;
+	private boolean bGameOver = false;
 	
 	
 	public String getSessionId() {
@@ -28,26 +28,24 @@ public class TurnData {
 	public void setUserNickName(String userNickName) {
 		this.userNickName = userNickName;
 	}
-
-
-	public boolean isbIsOver() {
-		return bIsOver;
-	}
-
-
-	public void setbIsOver(boolean bIsOver) {
-		this.bIsOver = bIsOver;
-	}
-
-
-	public boolean isbKingIsDead() {
-		return bKingIsDead;
-	}
-
-
-	public void setbKingIsDead(boolean bKingIsDead) {
-		this.bKingIsDead = bKingIsDead;
+	
+	
+	public boolean isbDisconnected() {
+		return bDisconnected;
 	}
 	
 	
+	public void setbDisconnected(boolean bDisconnected) {
+		this.bDisconnected = bDisconnected;
+	}
+
+
+	public boolean isbGameOver() {
+		return bGameOver;
+	}
+
+
+	public void setbGameOver(boolean bGameOver) {
+		this.bGameOver = bGameOver;
+	}
 }

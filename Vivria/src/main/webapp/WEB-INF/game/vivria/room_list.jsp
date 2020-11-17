@@ -95,7 +95,7 @@
 	function sendPost(_url, _keyArray, _valueArray) {
 		try {
 			var formObj = document.getElementById("post_form");
-			if (formObj != null) {
+			if (formObj != null && iframeObj.parentNode != null) {
 				// 기존 오브젝트 삭제
 				iframeObj.parentNode.removeChild(formObj);
 			}
