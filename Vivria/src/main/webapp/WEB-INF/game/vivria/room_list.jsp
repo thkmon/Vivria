@@ -69,14 +69,14 @@
 		// _roomId 값이 존재할 경우 방 입장.
 		// _roomId 값이 존재하지 않을 경우 방 개설.
 		if (_roomId != null && _roomId.length > 0) {
-			keyArray = ["roomId", "userNickName", "userType"];
-			valueArray = [_roomId, userNickName, userType];
+			keyArray = ["userNickName", "userType"];
+			valueArray = [userNickName, userType];
+			sendPost("/game/vivria/room/" + _roomId, keyArray, valueArray);
 		} else {
 			keyArray = ["roomName", "userNickName", "userType"];
 			valueArray = [roomName, userNickName, userType];
+			sendPost("/game/vivria/room", keyArray, valueArray);
 		}
-
-		sendPost("/game/vivria/room", keyArray, valueArray);
 	}
 	
 	

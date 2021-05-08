@@ -53,4 +53,33 @@ public class StringUtil {
 		
 		return result;
 	}
+	
+	
+	public static String parseString(Object obj) {
+		if (obj == null) {
+			return "";
+		}
+		
+		String str = "";
+		
+		try {
+			str = String.valueOf(obj);
+		} catch (Exception e) {
+			str = "";
+		}
+		
+		return str;
+	}
+	
+	public static String nullToEmpty(String str) {
+		if (str == null) {
+			return "";
+		}
+		
+		return str;
+	}
+	
+	public static boolean isEmpty(String str) {
+		return str == null || str.length() == 0;
+	}
 }
