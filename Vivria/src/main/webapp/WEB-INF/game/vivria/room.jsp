@@ -50,7 +50,7 @@ function replaceMouseRightEvent() {
 window.onload = function() {
 	
 	if (location != null && location.href != null && location.href.indexOf("localhost") > -1) {
-		g_webSocket = new WebSocket("ws://localhost:8080/websocket");
+		g_webSocket = new WebSocket("ws://localhost:18080/websocket");
 	} else {
 		g_webSocket = new WebSocket("ws://ddoc.kr:18080/websocket");
 	}
