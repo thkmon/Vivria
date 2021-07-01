@@ -12,6 +12,6 @@ public class ChatController {
 	@RequestMapping(value = "/chat/test", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) {
 		
-		return "chat/test";
+		return "chat/test.jsp";
 	}
 }

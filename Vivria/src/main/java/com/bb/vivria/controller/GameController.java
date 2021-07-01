@@ -23,13 +23,13 @@ public class GameController {
 	@RequestMapping(value = "/game/vivria", method = {RequestMethod.GET, RequestMethod.POST})
 	public String gameVivria(Locale locale, Model model) {
 		
-		return "game/vivria/room_list";
+		return "game/vivria/room_list.jsp";
 	}
 	
 	
 	@RequestMapping(value = "/game/vivria/room", method = RequestMethod.GET)
 	public String gameVivriaRoomByGet(Locale locale, Model model) {
-		return "game/vivria/room_list";
+		return "game/vivria/room_list.jsp";
 	}
 	
 	
@@ -50,20 +50,20 @@ public class GameController {
 			String userType = request.getParameter("userType");
 			
 			if (userNickName == null || userNickName.length() == 0) {
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			} else {
 				userNickName = URLDecoder.decode(userNickName, "UTF-8");
 			}
 			
 			if (userType == null || userType.length() == 0) {
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			}
 			
 			// 방 생성
 			String roomName = request.getParameter("roomName");
 				
 			if (roomName == null || roomName.length() == 0) {
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			} else {
 				roomName = URLDecoder.decode(roomName, "UTF-8");
 			}
@@ -74,7 +74,7 @@ public class GameController {
 			// 세션에 방 정보 세팅하기
 			boolean isSet = setRoomInfoToSession(request, roomData, userNickName, userType);
 			if (!isSet) {
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			}
 			
 			// 새로 생성한 방으로 이동 (브라우저 주소값을 교체하면서 gameVivriaRoomById 메서드가 실행됨) 
@@ -82,7 +82,7 @@ public class GameController {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			return "game/vivria/wrong_access";
+			return "game/vivria/wrong_access.jsp";
 		}
 	}
 	
@@ -114,31 +114,31 @@ public class GameController {
 			}
 			
 			if (userNickName == null || userNickName.length() == 0) {
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			} else {
 				userNickName = URLDecoder.decode(userNickName, "UTF-8");
 			}
 			
 			if (userType == null || userType.length() == 0) {
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			}
 			
 			// 기존 방에 접속
 			RoomData roomData = GameServiceUtil.getRoomData(roomId);
 			if (roomData == null) {
 				// throw new MessageException("존재하지 않는 방입니다.");
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			}
 			
 			if (roomData.isbClosed()) {
 				// throw new MessageException("종료된 방입니다.");
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			}
 			
 			// 세션에 방 정보 세팅하기
 			boolean isSet = setRoomInfoToSession(request, roomData, userNickName, userType);
 			if (!isSet) {
-				return "game/vivria/wrong_access";
+				return "game/vivria/wrong_access.jsp";
 			}
 			
 			String roomName = StringUtil.nullToEmpty(roomData.getRoomName());
@@ -148,11 +148,11 @@ public class GameController {
 			model.addAttribute("userNickName", userNickName);
 			model.addAttribute("userType", userType);
 			
-			return "game/vivria/room";
+			return "game/vivria/room.jsp";
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			return "game/vivria/wrong_access";
+			return "game/vivria/wrong_access.jsp";
 		}
 	}
 	

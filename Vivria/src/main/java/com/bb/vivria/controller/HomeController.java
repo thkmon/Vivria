@@ -31,7 +31,7 @@ public class HomeController {
 		model.addAttribute("serverTime", formattedDate );
 		model.addAttribute("temp", "한글한글");
 		
-		return "home";
+		return "home.jsp";
 	}
 	
 }
