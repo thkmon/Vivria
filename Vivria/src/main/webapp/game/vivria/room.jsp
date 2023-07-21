@@ -1,4 +1,13 @@
 <%@ page contentType="text/html; charset=utf-8" %>
+<%
+	String requestUrl = "";
+	if (request.getServerPort() == 80) {
+		requestUrl = request.getServerName();
+	} else {
+		requestUrl = request.getServerName()+":"+request.getServerPort();
+	}
+	pageContext.setAttribute("requestUrl", requestUrl);
+%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -48,13 +57,8 @@ function replaceMouseRightEvent() {
 
 
 window.onload = function() {
+	g_webSocket = new WebSocket("ws://${requestUrl}/websocket");
 	
-	if (location != null && location.href != null && location.href.indexOf("localhost") > -1) {
-		g_webSocket = new WebSocket("ws://localhost:18080/websocket");
-	} else {
-		g_webSocket = new WebSocket("ws://ddoc.kr:18080/websocket");
-	}
-
 	// 뒤로 가기 방지
 	forbidBackCommand();
 	
