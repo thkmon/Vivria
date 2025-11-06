@@ -7,7 +7,7 @@
 	if (requestUrl != null && requestUrl.indexOf("localhost") > -1) {
 		response.sendRedirect("/game/vivria/");
 	} else {
-		response.sendRedirect("http://ddoc.kr");
+		// response.sendRedirect("http://ddoc.kr");
 	}
 %>
 <!DOCTYPE html>
